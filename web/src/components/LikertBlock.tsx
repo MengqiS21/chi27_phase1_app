@@ -14,15 +14,29 @@ type Props = {
   scale?: ScalePreset;
 };
 
-const SIZE_CLASS: Record<number, string> = {
-  1: "likert-size-xl",
-  2: "likert-size-lg",
-  3: "likert-size-md",
-  4: "likert-size-sm",
-  5: "likert-size-md",
-  6: "likert-size-lg",
-  7: "likert-size-xl",
+/** Symmetric V-shape: ends largest, center smallest. Index-based, not value-based. */
+const SYMMETRIC_SIZE_CLASSES: Record<number, string[]> = {
+  5: [
+    "likert-size-xl",
+    "likert-size-lg",
+    "likert-size-sm",
+    "likert-size-lg",
+    "likert-size-xl",
+  ],
+  7: [
+    "likert-size-xl",
+    "likert-size-lg",
+    "likert-size-md",
+    "likert-size-sm",
+    "likert-size-md",
+    "likert-size-lg",
+    "likert-size-xl",
+  ],
 };
+
+function sizeClassForIndex(index: number, total: number): string {
+  return SYMMETRIC_SIZE_CLASSES[total]?.[index] ?? "likert-size-md";
+}
 
 function hintAboveCircle(
   n: number,
@@ -49,6 +63,7 @@ export function LikertBlock({
   const scaleValues = config.values;
   const min = scaleValues[0];
   const max = scaleValues[scaleValues.length - 1];
+  const columnCount = scaleValues.length;
 
   return (
     <div className="space-y-0">
@@ -60,61 +75,68 @@ export function LikertBlock({
         return (
           <div key={fieldKey} className="likert-item">
             <p className="likert-statement">{statement}</p>
-            <div
-              className="likert-scale"
-              role="radiogroup"
-              aria-label={statement}
-            >
-              {scaleValues.map((n) => {
-                const isSelected = selected === n;
-                const hint = hintAboveCircle(n, isSelected, config, min, max);
-                const isEndHint = n === min || n === max;
-                const sizeClass = SIZE_CLASS[n] ?? "likert-size-md";
+            <div className="likert-scale-wrap">
+              <div
+                className="likert-scale"
+                style={{
+                  gridTemplateColumns: `repeat(${columnCount}, minmax(0, 1fr))`,
+                }}
+                role="radiogroup"
+                aria-label={statement}
+              >
+                {scaleValues.map((n, index) => {
+                  const isSelected = selected === n;
+                  const hint = hintAboveCircle(n, isSelected, config, min, max);
+                  const isEndHint = n === min || n === max;
+                  const sizeClass = sizeClassForIndex(index, columnCount);
 
-                return (
-                  <div key={n} className="likert-scale-cell">
-                    <div
-                      className="likert-hint"
-                      aria-hidden={hint ? undefined : true}
-                    >
-                      {hint ? (
-                        <span
-                          className={
-                            isEndHint ? "likert-hint-end" : "likert-hint-selected"
-                          }
-                        >
-                          {hint}
-                        </span>
-                      ) : (
-                        <span className="likert-hint-placeholder" aria-hidden>
-                          &nbsp;
-                        </span>
-                      )}
-                    </div>
-                    <label
-                      className={`likert-option-hit ${sizeClass} ${
-                        isSelected ? "likert-option-hit-selected" : ""
-                      }`}
-                    >
-                      <input
-                        type="radio"
-                        name={inputName}
-                        value={n}
-                        checked={isSelected}
-                        onChange={() => onChange(fieldKey, n)}
-                        aria-label={config.ariaLabel(n)}
-                      />
-                      <span
-                        className={`likert-option ${sizeClass} ${
-                          isSelected ? "likert-option-selected" : ""
+                  return (
+                    <div key={n} className="likert-scale-cell">
+                      <div
+                        className="likert-hint"
+                        aria-hidden={hint ? undefined : true}
+                      >
+                        {hint ? (
+                          <span
+                            className={
+                              isEndHint
+                                ? "likert-hint-end"
+                                : "likert-hint-selected"
+                            }
+                          >
+                            {hint}
+                          </span>
+                        ) : (
+                          <span className="likert-hint-placeholder" aria-hidden>
+                            &nbsp;
+                          </span>
+                        )}
+                      </div>
+                      <label
+                        className={`likert-option-hit ${sizeClass} ${
+                          isSelected ? "likert-option-hit-selected" : ""
                         }`}
                       >
-                        <span className="likert-option-num">{n}</span>
-                      </span>
-                    </label>
-                  </div>
-                );
-              })}
+                        <input
+                          type="radio"
+                          name={inputName}
+                          value={n}
+                          checked={isSelected}
+                          onChange={() => onChange(fieldKey, n)}
+                          aria-label={config.ariaLabel(n)}
+                        />
+                        <span
+                          className={`likert-option ${sizeClass} ${
+                            isSelected ? "likert-option-selected" : ""
+                          }`}
+                        >
+                          <span className="likert-option-num">{n}</span>
+                        </span>
+                      </label>
+                    </div>
+                  );
+                })}
+              </div>
             </div>
           </div>
         );

@@ -122,9 +122,12 @@
     @apply mb-4 text-base font-medium leading-relaxed text-ink;
   }
 
+  .likert-scale-wrap {
+    @apply mx-auto w-full max-w-fit;
+  }
+
   .likert-scale {
     @apply grid w-full gap-x-0.5 sm:gap-x-1;
-    grid-template-columns: repeat(7, minmax(0, 1fr));
   }
 
   .likert-scale-cell {
