@@ -1,0 +1,262 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --accent: #8879b6;
+    --accent-hover: #7264a8;
+    --chat-user: #edeaf7;
+  }
+
+  html {
+    @apply bg-page text-ink antialiased;
+  }
+
+  body {
+    @apply min-h-screen font-sans text-base leading-relaxed;
+  }
+
+  :focus-visible {
+    @apply outline-2 outline-offset-2 outline-accent;
+  }
+}
+
+@layer components {
+  .page-shell {
+    @apply mx-auto w-full max-w-content px-6 pb-16 pt-12;
+  }
+
+  .card {
+    @apply rounded-card border border-border bg-surface p-8;
+  }
+
+  .page-title {
+    @apply text-[1.75rem] font-bold leading-tight text-ink;
+  }
+
+  .page-lead {
+    @apply mt-2 text-base leading-relaxed text-muted;
+  }
+
+  .section-title {
+    @apply text-2xl font-bold text-ink;
+  }
+
+  .icon-badge {
+    @apply inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-full;
+    color: var(--accent);
+    background-color: var(--chat-user);
+  }
+
+  .icon-badge-lg {
+    @apply inline-flex h-12 w-12 items-center justify-center rounded-full;
+    color: var(--accent);
+    background-color: var(--chat-user);
+  }
+
+  .field-label-row {
+    @apply mb-2 flex items-center gap-2;
+  }
+
+  .field-label-row .field-label {
+    @apply mb-0;
+  }
+
+  .btn-primary {
+    @apply inline-flex min-h-[44px] min-w-[44px] items-center justify-center rounded-btn px-7 py-3 text-base font-semibold text-white transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 disabled:cursor-not-allowed disabled:opacity-50;
+    background-color: var(--accent);
+  }
+
+  .btn-primary:hover:not(:disabled) {
+    background-color: var(--accent-hover);
+  }
+
+  .btn-primary:focus-visible {
+    outline-color: var(--accent);
+  }
+
+  .btn-secondary {
+    @apply inline-flex min-h-[44px] min-w-[44px] items-center justify-center rounded-btn border-[1.5px] border-accent bg-transparent px-7 py-3 text-base font-semibold text-accent transition-colors hover:bg-chat-user focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent disabled:cursor-not-allowed disabled:opacity-50;
+  }
+
+  .field-label {
+    @apply mb-2 block text-base font-semibold text-ink;
+  }
+
+  .field-input {
+    @apply w-full min-h-[44px] rounded-btn border-[1.5px] border-input-border bg-surface px-4 py-3 text-base text-ink transition-shadow focus:border-accent focus:outline-none focus:ring-[3px] focus:ring-accent/15;
+  }
+
+  .field-select {
+    @apply field-input max-w-md;
+  }
+
+  .alert-error {
+    @apply rounded-btn border border-error bg-error-bg px-4 py-3 text-base text-error;
+  }
+
+  .progress-track {
+    @apply h-1.5 w-full overflow-hidden rounded-sm bg-border;
+  }
+
+  .progress-fill {
+    @apply h-full rounded-sm transition-all duration-300;
+    background-color: var(--accent);
+  }
+
+  .scenario-box {
+    @apply mb-7 rounded-btn border-l-[3px] bg-scenario px-6 py-5 text-[0.9375rem] italic leading-relaxed text-ink;
+    border-left-color: var(--accent);
+  }
+
+  .consent-box {
+    @apply whitespace-pre-wrap text-base leading-relaxed text-ink;
+  }
+
+  .likert-item {
+    @apply border-b border-border py-6 last:border-b-0;
+  }
+
+  .likert-statement {
+    @apply mb-4 text-base font-medium leading-relaxed text-ink;
+  }
+
+  .likert-scale {
+    @apply grid w-full gap-x-0.5 sm:gap-x-1;
+    grid-template-columns: repeat(7, minmax(0, 1fr));
+  }
+
+  .likert-scale-cell {
+    @apply flex min-w-0 flex-col items-center;
+  }
+
+  .likert-hint {
+    @apply mb-2 flex w-full min-h-[2.25rem] items-end justify-center sm:min-h-[2.5rem];
+  }
+
+  .likert-hint-end,
+  .likert-hint-selected {
+    @apply block w-full text-center font-medium leading-none;
+    white-space: nowrap;
+  }
+
+  .likert-hint-end {
+    @apply text-[0.5625rem] text-muted sm:text-[0.6875rem];
+  }
+
+  .likert-hint-selected {
+    @apply text-[0.625rem] sm:text-[0.6875rem];
+    color: var(--accent);
+  }
+
+  .likert-hint-placeholder {
+    @apply invisible block h-0 overflow-hidden;
+  }
+
+  .likert-option-hit {
+    @apply flex cursor-pointer items-center justify-center rounded-full p-1.5 transition-colors;
+    min-width: 44px;
+    min-height: 44px;
+  }
+
+  .likert-option {
+    @apply flex shrink-0 items-center justify-center rounded-full border-2 border-input-border bg-surface font-semibold text-ink transition-all duration-200;
+  }
+
+  .likert-option-hit:hover .likert-option:not(.likert-option-selected) {
+    @apply border-accent;
+  }
+
+  .likert-option-selected {
+    @apply border-accent text-white;
+    background-color: var(--accent);
+  }
+
+  .likert-option-num {
+    @apply text-sm leading-none;
+  }
+
+  .likert-size-sm {
+    width: 2rem;
+    height: 2rem;
+  }
+
+  .likert-size-md {
+    width: 2.375rem;
+    height: 2.375rem;
+  }
+
+  .likert-size-lg {
+    width: 2.75rem;
+    height: 2.75rem;
+  }
+
+  .likert-size-xl {
+    width: 3.125rem;
+    height: 3.125rem;
+  }
+
+  .likert-option-hit input {
+    @apply sr-only;
+  }
+
+  .chat-thread {
+    @apply mx-auto mb-6 flex max-w-chat flex-col gap-5;
+  }
+
+  .chat-message {
+    @apply flex max-w-[92%] gap-3;
+  }
+
+  .chat-message-user {
+    @apply ml-auto flex-row-reverse items-end;
+  }
+
+  .chat-message-assistant {
+    @apply mr-auto items-end;
+  }
+
+  .chat-message-body {
+    @apply flex min-w-0 flex-col;
+  }
+
+  .chat-message-user .chat-message-body {
+    @apply items-end;
+  }
+
+  .chat-avatar {
+    @apply flex h-9 w-9 shrink-0 items-center justify-center rounded-full;
+  }
+
+  .chat-avatar-user {
+    color: #fff;
+    background-color: var(--accent);
+  }
+
+  .chat-avatar-ai {
+    @apply border border-border bg-surface;
+    color: var(--accent);
+  }
+
+  .chat-role {
+    @apply mb-1.5 text-[0.8125rem] font-semibold text-muted;
+  }
+
+  .chat-bubble-user {
+    @apply rounded-[16px_16px_4px_16px] px-4 py-3 text-base leading-relaxed text-ink;
+    background-color: var(--chat-user);
+  }
+
+  .chat-bubble-assistant {
+    @apply rounded-[16px_16px_16px_4px] border border-border bg-surface px-4 py-3 text-base leading-relaxed text-ink;
+  }
+
+  .checkbox-row {
+    @apply flex min-h-[44px] items-start gap-3;
+  }
+
+  .checkbox-row input {
+    @apply mt-1 h-5 w-5 shrink-0 accent-accent;
+  }
+}
