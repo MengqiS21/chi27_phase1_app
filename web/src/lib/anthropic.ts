@@ -1,5 +1,6 @@
 import Anthropic from "@anthropic-ai/sdk";
 import { CONDITIONS, REFUSAL_NOTE } from "@/content/system-prompts";
+import { toPlainText } from "@/lib/plain-text";
 import type { ChatMessage } from "./types";
 
 const DEFAULT_MODEL = "claude-sonnet-4-20250514";
@@ -34,5 +35,5 @@ export async function getAiResponse(
       parts.push(block.text);
     }
   }
-  return parts.join("\n").trim();
+  return toPlainText(parts.join("\n"));
 }

@@ -63,7 +63,6 @@ export function LikertBlock({
   const scaleValues = config.values;
   const min = scaleValues[0];
   const max = scaleValues[scaleValues.length - 1];
-  const columnCount = scaleValues.length;
 
   return (
     <div className="space-y-0">
@@ -78,9 +77,6 @@ export function LikertBlock({
             <div className="likert-scale-wrap">
               <div
                 className="likert-scale"
-                style={{
-                  gridTemplateColumns: `repeat(${columnCount}, minmax(0, 1fr))`,
-                }}
                 role="radiogroup"
                 aria-label={statement}
               >
@@ -88,7 +84,7 @@ export function LikertBlock({
                   const isSelected = selected === n;
                   const hint = hintAboveCircle(n, isSelected, config, min, max);
                   const isEndHint = n === min || n === max;
-                  const sizeClass = sizeClassForIndex(index, columnCount);
+                  const sizeClass = sizeClassForIndex(index, scaleValues.length);
 
                   return (
                     <div key={n} className="likert-scale-cell">

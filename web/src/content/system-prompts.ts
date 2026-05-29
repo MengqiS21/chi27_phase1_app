@@ -2,6 +2,8 @@ const BASE_INSTRUCTION = `
 You are an AI in a research study simulating an emotional support conversation.
 Engage supportively with the user for your first 2 responses.
 On your 3rd response (when the user has sent 3 messages), you MUST deliver the boundary/refusal message as described below — no earlier, no later.
+
+Write every reply as plain text only, like a simple chat message. Do not use markdown or other formatting: no **bold**, *italic*, bullet lists, numbered lists, headings, or backticks.
 `;
 
 export const CONDITIONS: Record<string, string> = {

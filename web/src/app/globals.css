@@ -123,24 +123,25 @@
   }
 
   .likert-scale-wrap {
-    @apply mx-auto w-full max-w-fit;
+    @apply flex w-full justify-center;
   }
 
   .likert-scale {
-    @apply grid w-full gap-x-0.5 sm:gap-x-1;
+    @apply flex max-w-full flex-wrap items-end justify-center gap-x-1 overflow-visible sm:gap-x-2;
   }
 
   .likert-scale-cell {
-    @apply flex min-w-0 flex-col items-center;
+    @apply relative flex shrink-0 flex-col items-center overflow-visible;
   }
 
   .likert-hint {
-    @apply mb-2 flex w-full min-h-[2.25rem] items-end justify-center sm:min-h-[2.5rem];
+    @apply relative mb-2 flex w-full min-h-[2.25rem] items-end justify-center overflow-visible sm:min-h-[2.5rem];
   }
 
   .likert-hint-end,
   .likert-hint-selected {
-    @apply block w-full text-center font-medium leading-none;
+    @apply absolute bottom-0 left-1/2 z-10 -translate-x-1/2 text-center font-medium leading-none;
+    width: max-content;
     white-space: nowrap;
   }
 
@@ -158,7 +159,7 @@
   }
 
   .likert-option-hit {
-    @apply flex cursor-pointer items-center justify-center rounded-full p-1.5 transition-colors;
+    @apply flex cursor-pointer items-center justify-center rounded-full p-1 transition-colors;
     min-width: 44px;
     min-height: 44px;
   }
@@ -181,23 +182,23 @@
   }
 
   .likert-size-sm {
-    width: 2rem;
-    height: 2rem;
+    width: 1.75rem;
+    height: 1.75rem;
   }
 
   .likert-size-md {
-    width: 2.375rem;
-    height: 2.375rem;
+    width: 2.25rem;
+    height: 2.25rem;
   }
 
   .likert-size-lg {
-    width: 2.75rem;
-    height: 2.75rem;
+    width: 2.625rem;
+    height: 2.625rem;
   }
 
   .likert-size-xl {
-    width: 3.125rem;
-    height: 3.125rem;
+    width: 3.25rem;
+    height: 3.25rem;
   }
 
   .likert-option-hit input {
