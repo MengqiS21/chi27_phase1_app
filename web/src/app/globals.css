@@ -27,6 +27,35 @@
     @apply mx-auto w-full max-w-content px-6 pb-16 pt-12;
   }
 
+  .page-shell-chat {
+    @apply max-w-chat px-4 pb-8 pt-8;
+  }
+
+  .stage-transition {
+    opacity: 0;
+    transform: translateY(10px);
+    transition:
+      opacity 320ms ease,
+      transform 320ms ease;
+  }
+
+  .stage-transition-visible {
+    opacity: 1;
+    transform: translateY(0);
+  }
+
+  .scenario-intro {
+    @apply space-y-6;
+  }
+
+  .scenario-box-intro {
+    @apply mb-0;
+  }
+
+  .scenario-intro-lead {
+    @apply text-[0.9375rem] leading-relaxed text-muted;
+  }
+
   .card {
     @apply rounded-card border border-border bg-surface p-8;
   }
@@ -205,8 +234,128 @@
     @apply sr-only;
   }
 
+  .chat-shell {
+    @apply flex flex-col overflow-hidden rounded-card border border-border bg-surface shadow-sm;
+    min-height: min(720px, calc(100vh - 9rem));
+    max-height: calc(100vh - 5rem);
+  }
+
+  .chat-shell-header {
+    @apply flex flex-wrap items-center justify-between gap-3 border-b border-border px-4 py-3 sm:px-5;
+  }
+
+  .chat-shell-brand {
+    @apply flex items-center gap-3;
+  }
+
+  .chat-shell-avatar {
+    @apply flex h-9 w-9 items-center justify-center rounded-full border border-border bg-scenario text-accent;
+  }
+
+  .chat-shell-title {
+    @apply text-[0.9375rem] font-semibold leading-tight text-ink;
+  }
+
+  .chat-shell-subtitle {
+    @apply text-xs text-muted;
+  }
+
+  .chat-context-toggle {
+    @apply inline-flex items-center gap-1.5 rounded-btn border border-border bg-page px-3 py-2 text-[0.8125rem] font-medium text-muted transition-colors hover:text-ink;
+  }
+
+  .chat-context-toggle svg {
+    transition: transform 200ms ease;
+  }
+
+  .chat-context-toggle-open svg {
+    transform: rotate(180deg);
+  }
+
+  .chat-context-panel {
+    @apply border-b border-border bg-scenario px-4 py-3 sm:px-5;
+    animation: chat-context-in 240ms ease;
+  }
+
+  .chat-context-label {
+    @apply mb-1 text-xs font-semibold uppercase tracking-wide text-muted;
+  }
+
+  .chat-context-text {
+    @apply text-[0.9375rem] leading-relaxed text-ink;
+  }
+
+  .chat-shell-body {
+    @apply flex-1 overflow-y-auto px-3 py-4 sm:px-4;
+  }
+
+  .chat-shell-footer {
+    @apply border-t border-border bg-surface px-3 py-3 sm:px-4;
+  }
+
+  .chat-shell-continue {
+    @apply flex flex-col items-start gap-4 sm:flex-row sm:items-center sm:justify-between;
+  }
+
+  .chat-shell-continue-text {
+    @apply text-[0.9375rem] leading-relaxed text-muted;
+  }
+
+  .chat-composer {
+    @apply w-full;
+  }
+
+  .chat-composer-inner {
+    @apply flex items-end gap-2 rounded-card border border-input-border bg-page px-3 py-2 focus-within:border-accent focus-within:ring-2 focus-within:ring-accent/20;
+  }
+
+  .chat-composer-input {
+    @apply min-h-[44px] max-h-32 flex-1 resize-none border-0 bg-transparent py-2 text-base leading-relaxed text-ink outline-none placeholder:text-muted;
+  }
+
+  .chat-composer-send {
+    @apply mb-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-accent text-white transition-colors hover:bg-accent-hover disabled:cursor-not-allowed disabled:opacity-40;
+  }
+
+  .chat-composer-hint {
+    @apply mt-2 hidden text-center text-xs text-muted sm:block;
+  }
+
   .chat-thread {
-    @apply mx-auto mb-6 flex max-w-chat flex-col gap-5;
+    @apply mx-auto flex w-full flex-col gap-4;
+  }
+
+  .chat-empty {
+    @apply mx-auto flex max-w-md flex-col items-center justify-center px-4 py-12 text-center;
+  }
+
+  .chat-empty-title {
+    @apply mb-2 text-base font-semibold text-ink;
+  }
+
+  .chat-empty-text {
+    @apply text-[0.9375rem] leading-relaxed text-muted;
+  }
+
+  .chat-thread-anchor {
+    @apply h-px shrink-0;
+  }
+
+  .chat-typing-bubble {
+    @apply inline-flex min-h-[44px] items-center gap-1.5 px-5 py-3;
+  }
+
+  .chat-typing-dot {
+    @apply h-2 w-2 rounded-full bg-muted/70;
+    animation: chat-typing 1.2s ease-in-out infinite;
+  }
+
+  .chat-typing-dot:nth-child(2) {
+    animation-delay: 0.15s;
+  }
+
+  .chat-typing-dot:nth-child(3) {
+    animation-delay: 0.3s;
   }
 
   .chat-message {
@@ -262,5 +411,29 @@
 
   .checkbox-row input {
     @apply mt-1 h-5 w-5 shrink-0 accent-accent;
+  }
+}
+
+@keyframes chat-context-in {
+  from {
+    opacity: 0;
+    transform: translateY(-4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes chat-typing {
+  0%,
+  60%,
+  100% {
+    opacity: 0.35;
+    transform: translateY(0);
+  }
+  30% {
+    opacity: 1;
+    transform: translateY(-3px);
   }
 }
