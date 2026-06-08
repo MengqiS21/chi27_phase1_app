@@ -4,11 +4,13 @@ import { useState } from "react";
 import { Bot, ChevronDown } from "lucide-react";
 import { ChatComposer } from "@/components/ChatComposer";
 import { ChatPanel } from "@/components/ChatPanel";
+import { CHAT_SITUATION_TOGGLE_LABEL } from "@/content/scenarios";
 import type { ChatMessage } from "@/lib/types";
 
 type Props = {
   scenarioTitle: string;
   scenarioText: string;
+  taskInstructions: string;
   messages: ChatMessage[];
   input: string;
   onInputChange: (value: string) => void;
@@ -22,6 +24,7 @@ type Props = {
 export function ChatShell({
   scenarioTitle,
   scenarioText,
+  taskInstructions,
   messages,
   input,
   onInputChange,
@@ -31,7 +34,7 @@ export function ChatShell({
   onContinue,
   continueLabel = "Continue to questions",
 }: Props) {
-  const [contextOpen, setContextOpen] = useState(true);
+  const [contextOpen, setContextOpen] = useState(false);
 
   return (
     <div className="chat-shell">
@@ -51,7 +54,7 @@ export function ChatShell({
           onClick={() => setContextOpen((open) => !open)}
           aria-expanded={contextOpen}
         >
-          Your situation
+          {CHAT_SITUATION_TOGGLE_LABEL}
           <ChevronDown size={16} strokeWidth={2} aria-hidden />
         </button>
       </header>
@@ -62,6 +65,10 @@ export function ChatShell({
       >
         <p className="chat-context-label">{scenarioTitle}</p>
         <p className="chat-context-text">{scenarioText}</p>
+      </div>
+
+      <div className="chat-task-banner">
+        <p className="chat-task-banner-text">{taskInstructions}</p>
       </div>
 
       <div className="chat-shell-body">

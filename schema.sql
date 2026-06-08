@@ -1,6 +1,8 @@
 -- =============================================================================
 -- CHI'27 Experiment Platform — Supabase setup (run entire file once)
 -- Supports both Pilot and Phase 1 studies in one database.
+--
+-- Keep identical to chi27_pilot_app/schema.sql (single shared schema).
 -- =============================================================================
 
 -- -----------------------------------------------------------------------------
@@ -14,6 +16,10 @@ CREATE TABLE IF NOT EXISTS participants (
   scenario_order JSONB,
   experienced_scenario_index INTEGER,
   assigned_condition TEXT,
+  pilot_group TEXT,
+  interaction_scenario TEXT,
+  condition_label TEXT,
+  transition_trigger_t INTEGER,
   latin_square_row INTEGER,
   condition_order JSONB,
   current_scenario_index INTEGER DEFAULT 0,
@@ -26,25 +32,49 @@ CREATE TABLE IF NOT EXISTS participants (
 ALTER TABLE participants ADD COLUMN IF NOT EXISTS study TEXT DEFAULT 'pilot';
 ALTER TABLE participants ADD COLUMN IF NOT EXISTS experienced_scenario_index INTEGER;
 ALTER TABLE participants ADD COLUMN IF NOT EXISTS assigned_condition TEXT;
+ALTER TABLE participants ADD COLUMN IF NOT EXISTS pilot_group TEXT;
+ALTER TABLE participants ADD COLUMN IF NOT EXISTS interaction_scenario TEXT;
+ALTER TABLE participants ADD COLUMN IF NOT EXISTS condition_label TEXT;
+ALTER TABLE participants ADD COLUMN IF NOT EXISTS transition_trigger_t INTEGER;
 
 -- Drop legacy pre-survey columns if migrating from old schema (optional)
 -- ALTER TABLE participants DROP COLUMN IF EXISTS age;
 
 -- -----------------------------------------------------------------------------
--- Conversations
+-- Conversations (one row per participant + scenario chat session)
+-- messages JSONB holds the full transcript, e.g.
+-- [{"role":"user","content":"...","turn_index":1},{"role":"assistant",...}]
 -- -----------------------------------------------------------------------------
+
+-- Upgrade from legacy per-message rows (column "role") — safe to re-run
+DO $$
+BEGIN
+  IF EXISTS (
+    SELECT 1
+    FROM information_schema.columns
+    WHERE table_schema = 'public'
+      AND table_name = 'conversations'
+      AND column_name = 'role'
+  ) THEN
+    DROP TABLE public.conversations CASCADE;
+  END IF;
+END $$;
 
 CREATE TABLE IF NOT EXISTS conversations (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  participant_id UUID REFERENCES participants(id),
-  scenario_index INTEGER,
+  participant_id UUID NOT NULL REFERENCES participants(id) ON DELETE CASCADE,
+  scenario_index INTEGER NOT NULL,
   scenario_type TEXT,
   condition TEXT,
-  turn_index INTEGER,
-  role TEXT,
-  content TEXT,
-  created_at TIMESTAMPTZ DEFAULT now()
+  messages JSONB NOT NULL DEFAULT '[]'::jsonb,
+  turn_count INTEGER NOT NULL DEFAULT 0,
+  started_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+  UNIQUE (participant_id, scenario_index)
 );
+
+CREATE INDEX IF NOT EXISTS conversations_participant_id_idx
+  ON conversations (participant_id);
 
 -- -----------------------------------------------------------------------------
 -- Survey responses (flexible JSONB for all questionnaire sections)
@@ -60,7 +90,7 @@ CREATE TABLE IF NOT EXISTS survey_responses (
   submitted_at TIMESTAMPTZ DEFAULT now()
 );
 
--- Legacy table kept for backward compatibility
+-- Legacy table — not used by current pilot/phase1 web apps (kept for old exports)
 CREATE TABLE IF NOT EXISTS scenario_responses (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   participant_id UUID REFERENCES participants(id),
@@ -87,6 +117,7 @@ DROP POLICY IF EXISTS "anon_select_participants" ON participants;
 DROP POLICY IF EXISTS "anon_update_participants" ON participants;
 DROP POLICY IF EXISTS "anon_insert_conversations" ON conversations;
 DROP POLICY IF EXISTS "anon_select_conversations" ON conversations;
+DROP POLICY IF EXISTS "anon_update_conversations" ON conversations;
 DROP POLICY IF EXISTS "anon_insert_survey_responses" ON survey_responses;
 DROP POLICY IF EXISTS "anon_select_survey_responses" ON survey_responses;
 DROP POLICY IF EXISTS "anon_insert_scenario_responses" ON scenario_responses;
@@ -106,6 +137,9 @@ CREATE POLICY "anon_insert_conversations"
 
 CREATE POLICY "anon_select_conversations"
   ON conversations FOR SELECT TO anon USING (true);
+
+CREATE POLICY "anon_update_conversations"
+  ON conversations FOR UPDATE TO anon USING (true) WITH CHECK (true);
 
 CREATE POLICY "anon_insert_survey_responses"
   ON survey_responses FOR INSERT TO anon WITH CHECK (true);

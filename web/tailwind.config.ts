@@ -25,6 +25,7 @@ const config: Config = {
       maxWidth: {
         content: "760px",
         chat: "680px",
+        reading: "42rem",
       },
       borderRadius: {
         btn: "8px",

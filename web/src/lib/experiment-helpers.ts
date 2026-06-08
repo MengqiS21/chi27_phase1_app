@@ -6,15 +6,12 @@ export function currentScenarioType(
   return state.scenarioOrder[state.scenarioIndex];
 }
 
-export function isExperiencedScenario(
-  state: Pick<ExperimentState, "scenarioIndex" | "experiencedScenarioIndex">
-): boolean {
-  return state.scenarioIndex === state.experiencedScenarioIndex;
-}
-
 export function currentCondition(
   state: Pick<ExperimentState, "assignedCondition">
 ): Condition {
+  if (!state.assignedCondition) {
+    throw new Error("Participant condition not assigned yet.");
+  }
   return state.assignedCondition;
 }
 

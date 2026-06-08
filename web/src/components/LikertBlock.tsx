@@ -77,6 +77,9 @@ export function LikertBlock({
             <div className="likert-scale-wrap">
               <div
                 className="likert-scale"
+                style={{
+                  gridTemplateColumns: `repeat(${scaleValues.length}, minmax(0, 1fr))`,
+                }}
                 role="radiogroup"
                 aria-label={statement}
               >

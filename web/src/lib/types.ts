@@ -3,12 +3,9 @@ export type Stage =
   | "screening"
   | "screened_out"
   | "consent"
+  | "pre_moderators"
   | "scenario_view"
   | "scenario_chat"
-  | "section_a"
-  | "section_b"
-  | "section_c"
-  | "pre_moderators"
   | "post_survey"
   | "demographics"
   | "debrief";
@@ -18,9 +15,9 @@ export type ChatMessage = {
   content: string;
 };
 
-export type ScenarioType = "temporal" | "relational" | "face" | "grief";
+export type ScenarioType = "scenario_1" | "scenario_2" | "scenario_3";
 export type Condition = "A" | "B" | "C" | "D";
-export type StudyType = "pilot" | "phase1";
+export type StudyType = "phase1";
 
 export type ExperimentState = {
   stage: Stage;
@@ -29,7 +26,7 @@ export type ExperimentState = {
   scenarioIndex: number;
   scenarioOrder: ScenarioType[];
   experiencedScenarioIndex: number;
-  assignedCondition: Condition;
+  assignedCondition: Condition | null;
   messages: ChatMessage[];
   turnCount: number;
   refusalDelivered: boolean;
@@ -38,11 +35,11 @@ export type ExperimentState = {
 export const INITIAL_STATE: ExperimentState = {
   stage: "landing",
   participantId: null,
-  study: "pilot",
+  study: "phase1",
   scenarioIndex: 0,
   scenarioOrder: [],
   experiencedScenarioIndex: 0,
-  assignedCondition: "A",
+  assignedCondition: null,
   messages: [],
   turnCount: 0,
   refusalDelivered: false,

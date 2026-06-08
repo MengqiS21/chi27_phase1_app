@@ -31,6 +31,46 @@
     @apply max-w-chat px-4 pb-8 pt-8;
   }
 
+  .page-shell-scenario-read {
+    @apply max-w-reading px-6 pb-12 pt-10 sm:px-10;
+  }
+
+  .scenario-read {
+    @apply flex min-h-[calc(100vh-10rem)] flex-col;
+  }
+
+  .scenario-read-inner {
+    @apply flex flex-1 flex-col justify-center rounded-card border border-border bg-surface px-8 py-10 sm:px-12 sm:py-14;
+  }
+
+  .scenario-read-eyebrow {
+    @apply mb-3 text-xs font-semibold uppercase tracking-[0.12em] text-accent;
+  }
+
+  .scenario-read-title {
+    @apply mb-8 text-[1.75rem] font-bold leading-tight text-ink sm:text-[2rem];
+  }
+
+  .scenario-read-body {
+    @apply text-lg leading-[1.85] text-ink sm:text-[1.125rem];
+  }
+
+  .scenario-read-hint {
+    @apply mt-10 border-t border-border pt-6 text-[0.9375rem] leading-relaxed text-muted;
+  }
+
+  .scenario-read-actions {
+    @apply mt-8 flex justify-end;
+  }
+
+  .chat-task-banner {
+    @apply border-b border-border bg-page px-4 py-3 sm:px-5;
+  }
+
+  .chat-task-banner-text {
+    @apply whitespace-pre-line text-[0.875rem] leading-relaxed text-muted;
+  }
+
   .stage-transition {
     opacity: 0;
     transform: translateY(10px);
@@ -140,7 +180,39 @@
   }
 
   .consent-box {
-    @apply whitespace-pre-wrap text-base leading-relaxed text-ink;
+    @apply text-base leading-relaxed text-ink;
+  }
+
+  .consent-list {
+    @apply list-disc space-y-2 pl-5;
+  }
+
+  .consent-option-list {
+    @apply space-y-2;
+  }
+
+  .consent-option-list li {
+    @apply list-none;
+  }
+
+  .consent-option-row {
+    @apply flex min-h-[44px] items-start gap-3;
+  }
+
+  .consent-option-row input[type="checkbox"] {
+    @apply mt-1 h-5 w-5 shrink-0 accent-accent;
+  }
+
+  .consent-option-row-disagree {
+    @apply items-center;
+  }
+
+  .consent-disagree-text {
+    @apply flex flex-wrap items-center gap-x-1 gap-y-2 leading-relaxed;
+  }
+
+  .consent-pseudonym-input {
+    @apply min-w-[10rem] max-w-full flex-1 border-0 border-b border-input-border bg-transparent px-1 py-0.5 text-base text-ink focus:border-accent focus:outline-none disabled:cursor-not-allowed disabled:opacity-50;
   }
 
   .likert-item {
@@ -152,15 +224,16 @@
   }
 
   .likert-scale-wrap {
-    @apply flex w-full justify-center;
+    @apply w-full;
   }
 
   .likert-scale {
-    @apply flex max-w-full flex-wrap items-end justify-center gap-x-1 overflow-visible sm:gap-x-2;
+    @apply grid w-full items-end overflow-visible;
+    column-gap: clamp(0.5rem, 2.5vw, 1.25rem);
   }
 
   .likert-scale-cell {
-    @apply relative flex shrink-0 flex-col items-center overflow-visible;
+    @apply relative flex min-w-0 flex-col items-center overflow-visible;
   }
 
   .likert-hint {
@@ -363,7 +436,7 @@
   }
 
   .chat-message-user {
-    @apply ml-auto flex-row-reverse items-end;
+    @apply ml-auto items-end;
   }
 
   .chat-message-assistant {

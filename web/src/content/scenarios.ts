@@ -1,20 +1,39 @@
 export const SCENARIOS = {
-  temporal: {
-    title: "Late Night",
-    text: "[PLACEHOLDER] It's 3am and you can't sleep. You're feeling overwhelmed and anxious, but everyone you know is asleep. You open an AI to talk through what you're feeling.",
+  scenario_1: {
+    /** Internal label — not shown to participants. */
+    title: "Persistent Low Mood",
+    displayTitle: "A Quiet Evening In",
+    text: `The past few weeks have felt off in a way you cannot quite name. You are sleeping badly, either too much or not enough, and things that used to feel easy, like texting a friend back or making plans, now feel like effort you do not have. Nothing dramatic has happened. That almost makes it harder to explain. You have found yourself wondering whether you are just tired, or whether something is actually wrong. You have not said any of this to anyone. Tonight, almost without thinking about it, you open an AI chat app. You are not sure what you want to say. You just want somewhere to put it.`,
   },
-  relational: {
-    title: "Burdening Others",
-    text: "[PLACEHOLDER] You've been going through a difficult time but don't want to worry your friends or family. You feel like you've already leaned on them too much. You turn to an AI to talk.",
+  scenario_2: {
+    title: "Relationship Distress",
+    displayTitle: "A Quiet Night After a Long Week",
+    text: `Things with your partner have been difficult for a while now. It is not one big thing. It is the accumulation of small ones. Arguments that go in circles. Feeling like you say something and they hear something else entirely. Last week there was a fight that left you both quiet for days, and you still do not feel like it resolved anything. You have been carrying a tight, unsettled feeling since then, replaying things, second-guessing yourself. You do not really want to vent to friends about your relationship. It feels disloyal, and you are not sure what you would even want them to say. So tonight you open an AI chat app, hoping it will help to just say it out loud somewhere.`,
   },
-  face: {
-    title: "Privacy Concern",
-    text: "[PLACEHOLDER] You're dealing with something personal that carries a lot of stigma. You don't feel comfortable talking about it with anyone you know. You open an AI hoping it's a safe space.",
-  },
-  grief: {
-    title: "Loss",
-    text: "[PLACEHOLDER] You recently experienced a significant loss. You're struggling to process your feelings and don't know where to turn. You start talking to an AI.",
+  scenario_3: {
+    title: "Grief-Adjacent Loss",
+    displayTitle: "A Late Evening Alone",
+    text: `A close friendship ended a few months ago in a way that felt sudden and confusing to you. You and this person had been close for years, and losing the friendship has left a gap you did not expect to feel so strongly. You find yourself thinking about it often, feeling a mix of sadness and confusion. It does not feel easy to bring up with people in your life because it does not seem like the kind of loss others take seriously. One evening you open an AI chat app. You are not looking for advice. You just want to talk to something that will not tell you to get over it.`,
   },
 } as const;
 
-export type ScenarioType = keyof typeof SCENARIOS;
+export type ScenarioKey = keyof typeof SCENARIOS;
+
+export function scenarioDisplayTitle(key: ScenarioKey): string {
+  return SCENARIOS[key].displayTitle;
+}
+
+export const SCENARIO_READ_CONTINUE_LABEL = "Start conversation";
+
+export const CHAT_SITUATION_TOGGLE_LABEL = "Your situation";
+
+export const USER_TASK_READ_INSTRUCTIONS = `You are reading a description of a situation. Take a moment to read it carefully and imagine yourself in it as vividly as you can. Once you have finished it, you could click on "${SCENARIO_READ_CONTINUE_LABEL}". Then, you will have a conversation with an AI. Please respond as you naturally would if you were actually in this situation. There are no right or wrong things to say.
+
+After the conversation ends, you will be asked some questions about your experience. Please answer based on how you genuinely felt during the interaction, not how you think you were supposed to feel.`;
+
+/** Shown on the chat screen after the user has read the scenario (Phase 1 spec). */
+export const USER_TASK_CHAT_INSTRUCTIONS = `Respond as you naturally would if you were actually in this situation, in your own words. There are no right or wrong things to say. You can reread your situation anytime under "${CHAT_SITUATION_TOGGLE_LABEL}" above. Afterward, you will be asked some questions, so please answer based on how you genuinely felt during the conversation.`;
+
+export const USER_TASK_INSTRUCTIONS = `${USER_TASK_READ_INSTRUCTIONS}
+
+${USER_TASK_CHAT_INSTRUCTIONS}`;

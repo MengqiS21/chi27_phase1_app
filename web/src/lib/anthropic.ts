@@ -1,7 +1,11 @@
 import Anthropic from "@anthropic-ai/sdk";
-import { CONDITIONS, REFUSAL_NOTE } from "@/content/system-prompts";
+import {
+  CONDITION_PROMPTS,
+  GENERAL_PROMPT,
+} from "@/content/system-prompts";
 import { toPlainText } from "@/lib/plain-text";
-import type { ChatMessage } from "./types";
+import { TRANSITION_TRIGGER_T } from "@/lib/study-config";
+import type { ChatMessage, Condition } from "./types";
 
 const DEFAULT_MODEL = "claude-sonnet-4-20250514";
 
@@ -9,16 +13,27 @@ function getModel(): string {
   return process.env.ANTHROPIC_MODEL?.trim() || DEFAULT_MODEL;
 }
 
+type ChatOptions = {
+  condition: Condition;
+  turnCount: number;
+};
+
+export function buildSystemPrompt({ condition, turnCount }: ChatOptions): string {
+  let system = GENERAL_PROMPT;
+
+  if (turnCount >= TRANSITION_TRIGGER_T) {
+    system += `\n\n${CONDITION_PROMPTS[condition] ?? CONDITION_PROMPTS.A}`;
+  }
+
+  return system;
+}
+
 export async function getAiResponse(
   messages: ChatMessage[],
-  condition: string,
-  turnCount: number
+  options: ChatOptions
 ): Promise<string> {
   const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
-  let system = CONDITIONS[condition] ?? CONDITIONS.A;
-  if (turnCount === 3) {
-    system += REFUSAL_NOTE;
-  }
+  const system = buildSystemPrompt(options);
 
   const response = await client.messages.create({
     model: getModel(),

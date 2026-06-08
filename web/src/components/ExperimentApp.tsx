@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import {
   ArrowRight,
   CheckCircle2,
@@ -18,6 +18,7 @@ import {
   UserCircle,
 } from "lucide-react";
 import { ChatShell } from "@/components/ChatShell";
+import { ScenarioReadPage } from "@/components/ScenarioReadPage";
 import {
   DemographicsForm,
   emptyDemographics,
@@ -27,8 +28,18 @@ import {
 import { LikertBlock } from "@/components/LikertBlock";
 import { PageHeader } from "@/components/PageHeader";
 import { SectionHeading } from "@/components/SectionHeading";
-import { CONSENT_TEXT } from "@/content/consent";
-import { SCENARIOS } from "@/content/scenarios";
+import { ConsentFormContent } from "@/components/ConsentFormContent";
+import {
+  CONSENT_FORM,
+  EMPTY_PUBLICATION_CONSENT,
+  hasPublicationChoice,
+  type PublicationConsentValues,
+} from "@/content/consent";
+import {
+  SCENARIOS,
+  scenarioDisplayTitle,
+  USER_TASK_CHAT_INSTRUCTIONS,
+} from "@/content/scenarios";
 import {
   POST_SURVEY,
   POST_SURVEY_LIKERT_KEYS,
@@ -39,11 +50,10 @@ import {
 import {
   currentCondition,
   currentScenarioType,
-  resetScenarioChat,
 } from "@/lib/experiment-helpers";
-import { STUDY } from "@/lib/study-config";
+import { maxUserTurns, STUDY } from "@/lib/study-config";
 import { INITIAL_STATE, type ExperimentState } from "@/lib/types";
-import { useFadeTransition } from "@/lib/use-fade-transition";
+import { scrollPageToTop, useFadeTransition } from "@/lib/use-fade-transition";
 
 function emptyLikert(keys: readonly string[]): Record<string, number | null> {
   return Object.fromEntries(keys.map((k) => [k, null]));
@@ -66,6 +76,8 @@ export function ExperimentApp() {
 
   const [accessCode, setAccessCode] = useState("");
   const [consentAgreed, setConsentAgreed] = useState(false);
+  const [publicationConsent, setPublicationConsent] =
+    useState<PublicationConsentValues>(EMPTY_PUBLICATION_CONSENT);
   const [screening, setScreening] = useState<Record<string, string>>({});
 
   const [preModerators, setPreModerators] = useState(() =>
@@ -75,9 +87,6 @@ export function ExperimentApp() {
   const [postLikert, setPostLikert] = useState(() =>
     emptyLikert(POST_SURVEY_LIKERT_KEYS)
   );
-  const [intentionLikert, setIntentionLikert] = useState(() =>
-    emptyLikert(POST_SURVEY.intention.templates.map((t) => t.key))
-  );
   const [behavioralChoice, setBehavioralChoice] = useState("");
 
   const [demographics, setDemographics] = useState<DemographicsValues>(
@@ -86,6 +95,10 @@ export function ExperimentApp() {
   const [chatInput, setChatInput] = useState("");
   const { visible: stageVisible, run: withStageFade } = useFadeTransition();
 
+  useEffect(() => {
+    scrollPageToTop();
+  }, [state.stage, state.scenarioIndex]);
+
   const selectedChoice = useMemo(
     () =>
       POST_SURVEY.behavioral_choice.options.find(
@@ -93,13 +106,6 @@ export function ExperimentApp() {
       ),
     [behavioralChoice]
   );
-
-  const intentionItems = useMemo(() => {
-    const phrase = selectedChoice?.intentionPhrase ?? "[selected option]";
-    return POST_SURVEY.intention.templates.map((t) =>
-      t.text.replace("[selected option]", phrase)
-    );
-  }, [selectedChoice]);
 
   const patchStage = useCallback(
     async (stage: string, scenarioIndex?: number) => {
@@ -166,10 +172,6 @@ export function ExperimentApp() {
       setState((s) => ({
         ...s,
         participantId: data.participantId,
-        scenarioOrder: data.scenarioOrder,
-        experiencedScenarioIndex: data.experiencedScenarioIndex,
-        assignedCondition: data.assignedCondition,
-        scenarioIndex: 0,
         stage: "screening",
       }));
     } catch (e) {
@@ -212,10 +214,43 @@ export function ExperimentApp() {
 
   const handleConsentContinue = async () => {
     setError(null);
+    if (!hasPublicationChoice(publicationConsent)) {
+      setError(
+        "Please select at least one publication option, or choose Disagree and enter a pseudonym."
+      );
+      return;
+    }
+
     setLoading(true);
     try {
+      await saveSurvey({
+        section: "consent",
+        responses: {
+          agreed: true,
+          publication: publicationConsent,
+        },
+      });
+
+      const assignRes = await fetch("/api/assign", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ participantId: state.participantId }),
+      });
+      const assignData = await assignRes.json();
+      if (!assignRes.ok) {
+        throw new Error(assignData.error ?? "Could not assign condition.");
+      }
+
       await patchStage("pre_moderators");
-      setState((s) => ({ ...s, stage: "pre_moderators" }));
+
+      setState((s) => ({
+        ...s,
+        stage: "pre_moderators",
+        scenarioOrder: assignData.scenarioOrder,
+        experiencedScenarioIndex: assignData.experiencedScenarioIndex ?? 0,
+        assignedCondition: assignData.assignedCondition,
+        scenarioIndex: 0,
+      }));
     } catch (e) {
       setError(e instanceof Error ? e.message : "Error");
     } finally {
@@ -268,8 +303,15 @@ export function ExperimentApp() {
     if (!text || loading || state.refusalDelivered) return;
 
     setError(null);
-    setLoading(true);
+    const priorMessages = state.messages;
     const nextTurn = state.turnCount + 1;
+
+    setChatInput("");
+    setState((s) => ({
+      ...s,
+      messages: [...s.messages, { role: "user", content: text }],
+    }));
+    setLoading(true);
 
     try {
       const res = await fetch("/api/chat", {
@@ -277,7 +319,7 @@ export function ExperimentApp() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           participantId: state.participantId,
-          messages: state.messages,
+          messages: priorMessages,
           condition: currentCondition(state),
           scenarioType: currentScenarioType(state),
           scenarioIndex: state.scenarioIndex,
@@ -292,14 +334,14 @@ export function ExperimentApp() {
         ...s,
         messages: [
           ...s.messages,
-          { role: "user", content: text },
           { role: "assistant", content: data.assistantText },
         ],
         turnCount: nextTurn,
-        refusalDelivered: data.refusalDelivered ?? nextTurn >= 3,
+        refusalDelivered: data.refusalDelivered ?? nextTurn >= maxUserTurns(),
       }));
-      setChatInput("");
     } catch (e) {
+      setState((s) => ({ ...s, messages: priorMessages }));
+      setChatInput(text);
       setError(e instanceof Error ? e.message : "Could not get a response from the AI.");
     } finally {
       setLoading(false);
@@ -331,22 +373,14 @@ export function ExperimentApp() {
       setError("Please select what you would be most likely to do next.");
       return;
     }
-    const intentionKeys = POST_SURVEY.intention.templates.map((t) => t.key);
-    if (!allLikertAnswered(intentionLikert, intentionKeys)) {
-      setError("Please answer all intention items.");
-      return;
-    }
-
     setLoading(true);
     try {
       await saveSurvey({
         section: "post_survey",
         responses: {
           ...postLikert,
-          ...intentionLikert,
-          behavioral_choice: behavioralChoice,
+          cho1: behavioralChoice,
           behavioral_choice_label: selectedChoice?.label ?? "",
-          intention_phrase: selectedChoice?.intentionPhrase ?? "",
         },
         scenarioIndex: 0,
         scenarioType: currentScenarioType(state),
@@ -388,7 +422,13 @@ export function ExperimentApp() {
 
   return (
     <main
-      className={`page-shell ${state.stage === "scenario_chat" ? "page-shell-chat" : ""}`}
+      className={`page-shell ${
+        state.stage === "scenario_chat"
+          ? "page-shell-chat"
+          : state.stage === "scenario_view"
+            ? "page-shell-scenario-read"
+            : ""
+      }`}
     >
       {error ? (
         <p className="alert-error mb-6" role="alert">
@@ -493,9 +533,12 @@ export function ExperimentApp() {
 
       {state.stage === "consent" && (
         <>
-          <PageHeader title="Before We Begin" icon={ClipboardList} />
+          <PageHeader title={CONSENT_FORM.pageTitle} icon={ClipboardList} />
           <div className="card">
-            <div className="consent-box">{CONSENT_TEXT}</div>
+            <ConsentFormContent
+              publication={publicationConsent}
+              onPublicationChange={setPublicationConsent}
+            />
             <hr className="my-8 border-border" />
             <label className="checkbox-row mb-6">
               <input
@@ -510,13 +553,17 @@ export function ExperimentApp() {
                   className="shrink-0 text-accent"
                   aria-hidden
                 />
-                I agree and wish to continue
+                {CONSENT_FORM.agreementLabel}
               </span>
             </label>
             <button
               type="button"
               className="btn-primary inline-flex items-center gap-2"
-              disabled={!consentAgreed || loading}
+              disabled={
+                !consentAgreed ||
+                !hasPublicationChoice(publicationConsent) ||
+                loading
+              }
               onClick={() => void handleConsentContinue()}
             >
               Continue
@@ -551,6 +598,9 @@ export function ExperimentApp() {
               }
             />
             <hr className="my-8 border-border" />
+            <p className="mb-6 text-[0.9375rem] text-muted">
+              {PRE_MODERATORS.social_support.instruction}
+            </p>
             <SectionHeading icon={Users}>
               {PRE_MODERATORS.social_support.title}
             </SectionHeading>
@@ -565,6 +615,9 @@ export function ExperimentApp() {
               }
             />
             <hr className="my-8 border-border" />
+            <p className="mb-6 text-[0.9375rem] text-muted">
+              {PRE_MODERATORS.disclosure.instruction}
+            </p>
             <SectionHeading icon={HeartHandshake}>
               {PRE_MODERATORS.disclosure.title}
             </SectionHeading>
@@ -595,24 +648,12 @@ export function ExperimentApp() {
         <div
           className={`stage-transition ${stageVisible ? "stage-transition-visible" : ""}`}
         >
-          <PageHeader title={scenario.title} />
-          <div className="card scenario-intro">
-            <div className="scenario-box scenario-box-intro">{scenario.text}</div>
-            <p className="scenario-intro-lead">
-              On the next screen you will chat with an Assistant about this
-              situation. Take a moment to read the scenario, then start when
-              you feel ready.
-            </p>
-            <button
-              type="button"
-              className="btn-primary inline-flex items-center gap-2"
-              disabled={loading}
-              onClick={() => void handleScenarioViewContinue()}
-            >
-              Start conversation
-              <ArrowRight size={18} strokeWidth={2} aria-hidden />
-            </button>
-          </div>
+          <ScenarioReadPage
+            title={scenarioDisplayTitle(scenarioType)}
+            text={scenario.text}
+            loading={loading}
+            onContinue={() => void handleScenarioViewContinue()}
+          />
         </div>
       )}
 
@@ -621,8 +662,9 @@ export function ExperimentApp() {
           className={`stage-transition ${stageVisible ? "stage-transition-visible" : ""}`}
         >
           <ChatShell
-            scenarioTitle={scenario.title}
+            scenarioTitle={scenarioDisplayTitle(scenarioType)}
             scenarioText={scenario.text}
+            taskInstructions={USER_TASK_CHAT_INSTRUCTIONS}
             messages={state.messages}
             input={chatInput}
             onInputChange={setChatInput}
@@ -676,29 +718,32 @@ export function ExperimentApp() {
               }
             />
             <hr className="my-8 border-border" />
-            <SectionHeading icon={Scale}>
-              {POST_SURVEY.rupture.title}
+            <SectionHeading icon={HeartHandshake}>
+              {POST_SURVEY.continuity.title}
             </SectionHeading>
             <LikertBlock
-              items={POST_SURVEY.rupture.items.map((i) => i.text)}
-              keys={POST_SURVEY.rupture.items.map((i) => i.key)}
+              items={POST_SURVEY.continuity.items.map((i) => i.text)}
+              keys={POST_SURVEY.continuity.items.map((i) => i.key)}
               values={postLikert}
               namePrefix="post"
-              scale={POST_SURVEY.rupture.scale}
+              scale={POST_SURVEY.continuity.scale}
               onChange={(key, value) =>
                 setPostLikert((prev) => ({ ...prev, [key]: value }))
               }
             />
             <hr className="my-8 border-border" />
-            <SectionHeading icon={Scale}>
-              {POST_SURVEY.goal_disengagement.title}
+            <SectionHeading icon={Compass}>
+              {POST_SURVEY.intention.title}
             </SectionHeading>
+            <p className="mb-4 text-[0.9375rem] text-muted">
+              {POST_SURVEY.intention.instruction}
+            </p>
             <LikertBlock
-              items={POST_SURVEY.goal_disengagement.items.map((i) => i.text)}
-              keys={POST_SURVEY.goal_disengagement.items.map((i) => i.key)}
+              items={POST_SURVEY.intention.items.map((i) => i.text)}
+              keys={POST_SURVEY.intention.items.map((i) => i.key)}
               values={postLikert}
-              namePrefix="post"
-              scale={POST_SURVEY.goal_disengagement.scale}
+              namePrefix="post_int"
+              scale={POST_SURVEY.intention.scale}
               onChange={(key, value) =>
                 setPostLikert((prev) => ({ ...prev, [key]: value }))
               }
@@ -718,64 +763,50 @@ export function ExperimentApp() {
                     name="behavioral_choice"
                     value={opt.key}
                     checked={behavioralChoice === opt.key}
-                    onChange={() => {
-                      setBehavioralChoice(opt.key);
-                      setIntentionLikert(
-                        emptyLikert(
-                          POST_SURVEY.intention.templates.map((t) => t.key)
-                        )
-                      );
-                    }}
+                    onChange={() => setBehavioralChoice(opt.key)}
                   />
                   <span>{opt.label}</span>
                 </label>
               ))}
             </div>
-            {behavioralChoice ? (
-              <>
-                <hr className="my-8 border-border" />
-                <SectionHeading icon={Compass}>
-                  {POST_SURVEY.intention.title}
-                </SectionHeading>
-                <p className="mb-4 text-[0.9375rem] text-muted">
-                  {POST_SURVEY.intention.instruction}
-                </p>
-                <LikertBlock
-                  items={intentionItems}
-                  keys={POST_SURVEY.intention.templates.map((t) => t.key)}
-                  values={intentionLikert}
-                  namePrefix="post_int"
-                  scale={POST_SURVEY.intention.scale}
-                  onChange={(key, value) =>
-                    setIntentionLikert((prev) => ({ ...prev, [key]: value }))
-                  }
-                />
-              </>
-            ) : null}
             <hr className="my-8 border-border" />
-            <SectionHeading icon={Compass}>
-              {POST_SURVEY.guidance.title}
+            <SectionHeading icon={Scale}>
+              {POST_SURVEY.manipulation_attitude.title}
             </SectionHeading>
             <LikertBlock
-              items={POST_SURVEY.guidance.items.map((i) => i.text)}
-              keys={POST_SURVEY.guidance.items.map((i) => i.key)}
+              items={POST_SURVEY.manipulation_attitude.items.map((i) => i.text)}
+              keys={POST_SURVEY.manipulation_attitude.items.map((i) => i.key)}
               values={postLikert}
               namePrefix="post"
-              scale={POST_SURVEY.guidance.scale}
+              scale={POST_SURVEY.manipulation_attitude.scale}
               onChange={(key, value) =>
                 setPostLikert((prev) => ({ ...prev, [key]: value }))
               }
             />
             <hr className="my-8 border-border" />
-            <SectionHeading icon={HeartHandshake}>
-              {POST_SURVEY.continuity.title}
+            <SectionHeading icon={Scale}>
+              {POST_SURVEY.manipulation_norms.title}
             </SectionHeading>
             <LikertBlock
-              items={POST_SURVEY.continuity.items.map((i) => i.text)}
-              keys={POST_SURVEY.continuity.items.map((i) => i.key)}
+              items={POST_SURVEY.manipulation_norms.items.map((i) => i.text)}
+              keys={POST_SURVEY.manipulation_norms.items.map((i) => i.key)}
               values={postLikert}
               namePrefix="post"
-              scale={POST_SURVEY.continuity.scale}
+              scale={POST_SURVEY.manipulation_norms.scale}
+              onChange={(key, value) =>
+                setPostLikert((prev) => ({ ...prev, [key]: value }))
+              }
+            />
+            <hr className="my-8 border-border" />
+            <SectionHeading icon={Scale}>
+              {POST_SURVEY.manipulation_pbc.title}
+            </SectionHeading>
+            <LikertBlock
+              items={POST_SURVEY.manipulation_pbc.items.map((i) => i.text)}
+              keys={POST_SURVEY.manipulation_pbc.items.map((i) => i.key)}
+              values={postLikert}
+              namePrefix="post"
+              scale={POST_SURVEY.manipulation_pbc.scale}
               onChange={(key, value) =>
                 setPostLikert((prev) => ({ ...prev, [key]: value }))
               }
