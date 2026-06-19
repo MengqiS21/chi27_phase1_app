@@ -1,10 +1,12 @@
 import { NextResponse } from "next/server";
 import { VALID_CODES } from "@/content/access-codes";
+import { cloudResearchInsertFields } from "@/lib/cloudresearch-params";
 import { getSupabase } from "@/lib/supabase";
 
 export async function POST(request: Request) {
   try {
-    const { accessCode } = await request.json();
+    const body = await request.json();
+    const { accessCode } = body;
     const code = String(accessCode ?? "")
       .trim()
       .toUpperCase();
@@ -21,6 +23,7 @@ export async function POST(request: Request) {
         access_code: code,
         study: "phase1",
         stage: "screening",
+        ...cloudResearchInsertFields(body),
       })
       .select("id")
       .single();

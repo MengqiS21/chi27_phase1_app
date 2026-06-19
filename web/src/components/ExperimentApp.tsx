@@ -52,6 +52,9 @@ import {
   currentScenarioType,
 } from "@/lib/experiment-helpers";
 import { maxUserTurns, STUDY } from "@/lib/study-config";
+import {
+  captureCloudResearchParams,
+} from "@/lib/cloudresearch-params";
 import { INITIAL_STATE, type ExperimentState } from "@/lib/types";
 import { scrollPageToTop, useFadeTransition } from "@/lib/use-fade-transition";
 
@@ -98,6 +101,15 @@ export function ExperimentApp() {
   useEffect(() => {
     scrollPageToTop();
   }, [state.stage, state.scenarioIndex]);
+
+  useEffect(() => {
+    if (process.env.NODE_ENV === "development") {
+      console.log(
+        "[CloudResearch] captured URL params:",
+        captureCloudResearchParams(window.location.search)
+      );
+    }
+  }, []);
 
   const selectedChoice = useMemo(
     () =>
@@ -153,11 +165,15 @@ export function ExperimentApp() {
   const handleBegin = async () => {
     setError(null);
     setLoading(true);
+    const captured = captureCloudResearchParams(window.location.search);
+    if (process.env.NODE_ENV === "development") {
+      console.log("[CloudResearch] sending with Begin:", captured);
+    }
     try {
       const res = await fetch("/api/participants", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ accessCode }),
+        body: JSON.stringify({ accessCode, ...captured }),
       });
       const data = await res.json();
       if (!res.ok) {

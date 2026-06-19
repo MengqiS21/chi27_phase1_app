@@ -12,6 +12,10 @@
 CREATE TABLE IF NOT EXISTS participants (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   access_code TEXT,
+  cloudresearch_participant_id TEXT,
+  cloudresearch_assignment_id TEXT,
+  cloudresearch_hit_id TEXT,
+  url_query_raw TEXT,
   study TEXT NOT NULL DEFAULT 'pilot',
   scenario_order JSONB,
   experienced_scenario_index INTEGER,
@@ -36,6 +40,10 @@ ALTER TABLE participants ADD COLUMN IF NOT EXISTS pilot_group TEXT;
 ALTER TABLE participants ADD COLUMN IF NOT EXISTS interaction_scenario TEXT;
 ALTER TABLE participants ADD COLUMN IF NOT EXISTS condition_label TEXT;
 ALTER TABLE participants ADD COLUMN IF NOT EXISTS transition_trigger_t INTEGER;
+ALTER TABLE participants ADD COLUMN IF NOT EXISTS cloudresearch_participant_id TEXT;
+ALTER TABLE participants ADD COLUMN IF NOT EXISTS cloudresearch_assignment_id TEXT;
+ALTER TABLE participants ADD COLUMN IF NOT EXISTS cloudresearch_hit_id TEXT;
+ALTER TABLE participants ADD COLUMN IF NOT EXISTS url_query_raw TEXT;
 
 -- Drop legacy pre-survey columns if migrating from old schema (optional)
 -- ALTER TABLE participants DROP COLUMN IF EXISTS age;
