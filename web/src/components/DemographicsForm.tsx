@@ -11,7 +11,6 @@ export type DemographicsValues = {
   dem4: string;
   dem5: string;
   dem5_other: string;
-  dem6: string;
   dem7: string;
 };
 
@@ -148,18 +147,6 @@ export function DemographicsForm({ values, onChange }: Props) {
       </div>
 
       <div>
-        <label className="field-label" htmlFor="dem6">
-          {DEMOGRAPHICS.region.label}
-        </label>
-        <input
-          id="dem6"
-          className="field-input"
-          value={values.dem6}
-          onChange={(e) => set({ dem6: e.target.value })}
-        />
-      </div>
-
-      <div>
         <label className="field-label" htmlFor="dem7">
           {DEMOGRAPHICS.aiEmotionalUseFrequency.label}
         </label>
@@ -191,7 +178,6 @@ export function emptyDemographics(): DemographicsValues {
     dem4: "",
     dem5: "",
     dem5_other: "",
-    dem6: "",
     dem7: "",
   };
 }
@@ -213,7 +199,6 @@ export function validateDemographics(values: DemographicsValues): string | null 
   if (values.dem5 === "Other" && !values.dem5_other.trim()) {
     return "Please specify your living situation.";
   }
-  if (!values.dem6.trim()) return "Please enter your country or region.";
   if (!values.dem7) {
     return "Please select how often you use AI tools for personal or emotional topics.";
   }

@@ -314,11 +314,6 @@ export const DEMOGRAPHICS = {
       "Other",
     ],
   },
-  region: {
-    key: "dem6",
-    label: "What country or region do you currently live in?",
-    type: "text" as const,
-  },
   aiEmotionalUseFrequency: {
     key: "dem7",
     label:
