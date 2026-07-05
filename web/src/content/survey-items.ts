@@ -41,7 +41,7 @@ export const PRE_MODERATORS = {
   },
   social_support: {
     title: "Social support",
-    participantHeading: "When you need someone to lean on",
+    participantHeading: "Support from people in your life",
     participantIcon: "users" as SurveyGroupIconKey,
     scale: "agree7" as const,
     instruction:
@@ -67,7 +67,7 @@ export const PRE_MODERATORS = {
   },
   disclosure: {
     title: "Disclosure comfort",
-    participantHeading: "The kinds of things people might type into a chat",
+    participantHeading: "How comfortable you'd feel sharing these in an AI chat",
     participantIcon: "message-square" as SurveyGroupIconKey,
     scale: "comfort5" as const,
     instruction:

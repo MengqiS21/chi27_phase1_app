@@ -14,8 +14,8 @@ type Props = {
   scale?: ScalePreset;
 };
 
-/** All scale points use the same circle size as the endpoint (Strongly disagree / Strongly agree). */
-const UNIFORM_SIZE_CLASS = "likert-size-xl";
+/** Uniform circle size — lg keeps scales readable without dominating the page. */
+const UNIFORM_SIZE_CLASS = "likert-size-lg";
 
 function hintAboveCircle(
   n: number,

@@ -839,7 +839,7 @@ export function ExperimentApp() {
               }
             />
             <hr className="survey-group-divider" />
-            <p className="mb-4 text-xl font-medium leading-snug text-ink sm:text-[1.1875rem]">
+            <p className="likert-statement mb-4">
               {POST_SURVEY.behavioral_choice.prompt}
             </p>
             <div className="space-y-2">

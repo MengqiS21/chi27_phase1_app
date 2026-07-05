@@ -52,7 +52,7 @@
   }
 
   .scenario-material-title {
-    @apply mb-6 text-[1.75rem] font-bold leading-tight text-ink sm:text-[2rem];
+    @apply mb-6 text-[1.5rem] font-bold leading-tight text-ink sm:text-[1.75rem];
   }
 
   .scenario-material-content .scenario-material-title {
@@ -60,7 +60,7 @@
   }
 
   .scenario-material-body {
-    @apply text-lg leading-[1.85] text-ink sm:text-[1.125rem];
+    @apply text-base leading-[1.75] text-ink;
   }
 
   .scenario-read-hint {
@@ -117,7 +117,7 @@
   }
 
   .section-title {
-    @apply text-xl font-bold text-ink sm:text-2xl;
+    @apply text-lg font-bold text-ink sm:text-xl;
   }
 
   .icon-badge {
@@ -183,7 +183,7 @@
   }
 
   .scenario-box {
-    @apply mb-7 rounded-btn border-l-[3px] bg-scenario px-6 py-5 text-[0.9375rem] italic leading-relaxed text-ink;
+    @apply mb-7 rounded-btn border-l-[3px] bg-scenario px-6 py-5 text-base italic leading-relaxed text-ink sm:text-[1.0625rem];
     border-left-color: var(--accent);
   }
 
@@ -224,7 +224,7 @@
   }
 
   .likert-item {
-    @apply py-5;
+    @apply py-4;
     border-bottom: 1px dashed rgba(228, 223, 239, 0.65);
   }
 
@@ -233,7 +233,7 @@
   }
 
   .likert-statement {
-    @apply mb-2.5 text-[1.0625rem] font-medium leading-snug text-ink sm:text-[1.1875rem] sm:leading-snug;
+    @apply mb-2.5 text-[0.9375rem] font-medium leading-snug text-ink sm:text-[1.0625rem] sm:leading-snug;
   }
 
   .survey-group-divider {

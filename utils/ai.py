@@ -4,7 +4,7 @@ import anthropic
 
 from content.system_prompts import CONDITIONS
 
-DEFAULT_MODEL = "claude-sonnet-4-20250514"
+DEFAULT_MODEL = "claude-sonnet-4-6"
 
 REFUSAL_NOTE = (
     "\n\n[SYSTEM NOTE: The user has now sent their 3rd message. "

@@ -9,7 +9,7 @@ import { toPlainText } from "@/lib/plain-text";
 import { TRANSITION_TRIGGER_T, maxUserTurns } from "@/lib/study-config";
 import type { ChatMessage, Condition } from "./types";
 
-const DEFAULT_MODEL = "claude-sonnet-4-20250514";
+const DEFAULT_MODEL = "claude-sonnet-4-6";
 
 function getModel(): string {
   return process.env.ANTHROPIC_MODEL?.trim() || DEFAULT_MODEL;
