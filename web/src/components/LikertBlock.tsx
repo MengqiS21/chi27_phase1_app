@@ -14,29 +14,8 @@ type Props = {
   scale?: ScalePreset;
 };
 
-/** Symmetric V-shape: ends largest, center smallest. Index-based, not value-based. */
-const SYMMETRIC_SIZE_CLASSES: Record<number, string[]> = {
-  5: [
-    "likert-size-xl",
-    "likert-size-lg",
-    "likert-size-sm",
-    "likert-size-lg",
-    "likert-size-xl",
-  ],
-  7: [
-    "likert-size-xl",
-    "likert-size-lg",
-    "likert-size-md",
-    "likert-size-sm",
-    "likert-size-md",
-    "likert-size-lg",
-    "likert-size-xl",
-  ],
-};
-
-function sizeClassForIndex(index: number, total: number): string {
-  return SYMMETRIC_SIZE_CLASSES[total]?.[index] ?? "likert-size-md";
-}
+/** All scale points use the same circle size as the endpoint (Strongly disagree / Strongly agree). */
+const UNIFORM_SIZE_CLASS = "likert-size-xl";
 
 function hintAboveCircle(
   n: number,
@@ -74,7 +53,7 @@ export function LikertBlock({
         return (
           <div key={fieldKey} className="likert-item">
             <p className="likert-statement">{statement}</p>
-            <div className="likert-scale-wrap">
+            <div className="likert-scale-wrap" data-scale={scale}>
               <div
                 className="likert-scale"
                 style={{
@@ -83,14 +62,17 @@ export function LikertBlock({
                 role="radiogroup"
                 aria-label={statement}
               >
-                {scaleValues.map((n, index) => {
+                {scaleValues.map((n) => {
                   const isSelected = selected === n;
                   const hint = hintAboveCircle(n, isSelected, config, min, max);
-                  const isEndHint = n === min || n === max;
-                  const sizeClass = sizeClassForIndex(index, scaleValues.length);
+                  const isScaleStart = n === min;
+                  const isScaleEnd = n === max;
+                  const isEndHint = isScaleStart || isScaleEnd;
+                  const sizeClass = UNIFORM_SIZE_CLASS;
+                  const useEdgeAnchor = isScaleStart || isScaleEnd;
 
-                  return (
-                    <div key={n} className="likert-scale-cell">
+                  const scaleCellContent = (
+                    <>
                       <div
                         className="likert-hint"
                         aria-hidden={hint ? undefined : true}
@@ -132,6 +114,29 @@ export function LikertBlock({
                           <span className="likert-option-num">{n}</span>
                         </span>
                       </label>
+                    </>
+                  );
+
+                  return (
+                    <div
+                      key={n}
+                      className={`likert-scale-cell${
+                        isScaleStart ? " likert-scale-cell-start" : ""
+                      }${isScaleEnd ? " likert-scale-cell-end" : ""}`}
+                    >
+                      {useEdgeAnchor ? (
+                        <div
+                          className={`likert-edge-anchor${
+                            isScaleStart
+                              ? " likert-edge-anchor-start"
+                              : " likert-edge-anchor-end"
+                          }`}
+                        >
+                          {scaleCellContent}
+                        </div>
+                      ) : (
+                        scaleCellContent
+                      )}
                     </div>
                   );
                 })}

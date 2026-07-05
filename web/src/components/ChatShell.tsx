@@ -4,6 +4,7 @@ import { useState } from "react";
 import { Bot, ChevronDown } from "lucide-react";
 import { ChatComposer } from "@/components/ChatComposer";
 import { ChatPanel } from "@/components/ChatPanel";
+import { FormErrorAlert } from "@/components/FormErrorAlert";
 import { CHAT_SITUATION_TOGGLE_LABEL } from "@/content/scenarios";
 import type { ChatMessage } from "@/lib/types";
 
@@ -17,6 +18,7 @@ type Props = {
   onSend: () => void;
   isLoading: boolean;
   refusalDelivered: boolean;
+  error?: string | null;
   onContinue: () => void;
   continueLabel?: string;
 };
@@ -31,6 +33,7 @@ export function ChatShell({
   onSend,
   isLoading,
   refusalDelivered,
+  error = null,
   onContinue,
   continueLabel = "Continue to questions",
 }: Props) {
@@ -82,21 +85,27 @@ export function ChatShell({
               The conversation has ended. When you are ready, continue to the
               follow-up questions.
             </p>
-            <button
-              type="button"
-              className="btn-primary w-full sm:w-auto"
-              onClick={onContinue}
-            >
-              {continueLabel}
-            </button>
+            <div className="flex w-full flex-col gap-3 sm:w-auto">
+              <FormErrorAlert message={error} />
+              <button
+                type="button"
+                className="btn-primary w-full sm:w-auto"
+                onClick={onContinue}
+              >
+                {continueLabel}
+              </button>
+            </div>
           </div>
         ) : (
-          <ChatComposer
-            value={input}
-            onChange={onInputChange}
-            onSubmit={onSend}
-            loading={isLoading}
-          />
+          <div className="space-y-3">
+            <FormErrorAlert message={error} />
+            <ChatComposer
+              value={input}
+              onChange={onInputChange}
+              onSubmit={onSend}
+              loading={isLoading}
+            />
+          </div>
         )}
       </footer>
     </div>

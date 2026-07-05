@@ -13,7 +13,6 @@ export type DemographicsValues = {
   dem5_other: string;
   dem6: string;
   dem7: string;
-  dem8: string;
 };
 
 type Props = {
@@ -162,7 +161,7 @@ export function DemographicsForm({ values, onChange }: Props) {
 
       <div>
         <label className="field-label" htmlFor="dem7">
-          {DEMOGRAPHICS.englishFirst.label}
+          {DEMOGRAPHICS.aiEmotionalUseFrequency.label}
         </label>
         <select
           id="dem7"
@@ -171,26 +170,7 @@ export function DemographicsForm({ values, onChange }: Props) {
           onChange={(e) => set({ dem7: e.target.value })}
         >
           <option value="">Select an option…</option>
-          {DEMOGRAPHICS.englishFirst.options.map((opt) => (
-            <option key={opt} value={opt}>
-              {opt}
-            </option>
-          ))}
-        </select>
-      </div>
-
-      <div>
-        <label className="field-label" htmlFor="dem8">
-          {DEMOGRAPHICS.englishComfort.label}
-        </label>
-        <select
-          id="dem8"
-          className="field-select"
-          value={values.dem8}
-          onChange={(e) => set({ dem8: e.target.value })}
-        >
-          <option value="">Select an option…</option>
-          {DEMOGRAPHICS.englishComfort.options.map((opt) => (
+          {DEMOGRAPHICS.aiEmotionalUseFrequency.options.map((opt) => (
             <option key={opt} value={opt}>
               {opt}
             </option>
@@ -213,7 +193,6 @@ export function emptyDemographics(): DemographicsValues {
     dem5_other: "",
     dem6: "",
     dem7: "",
-    dem8: "",
   };
 }
 
@@ -235,9 +214,8 @@ export function validateDemographics(values: DemographicsValues): string | null 
     return "Please specify your living situation.";
   }
   if (!values.dem6.trim()) return "Please enter your country or region.";
-  if (!values.dem7) return "Please answer whether English is your first language.";
-  if (!values.dem8) {
-    return "Please answer whether you can complete surveys comfortably in English.";
+  if (!values.dem7) {
+    return "Please select how often you use AI tools for personal or emotional topics.";
   }
   return null;
 }

@@ -137,8 +137,6 @@ export async function POST(request: Request) {
           interaction_scenario: assignment.interactionScenario,
           assigned_condition: assignment.assignedCondition,
           condition_label: assignment.conditionLabel,
-          transition_trigger_t: assignment.transitionTriggerT,
-          condition_order: assignment.conditionOrder,
           latin_square_row: slotIndex,
         })
         .eq("id", participantId)

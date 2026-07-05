@@ -6,15 +6,10 @@ import {
   CheckCircle2,
   ClipboardList,
   ClipboardPen,
-  Compass,
-  HeartHandshake,
   KeyRound,
   MessageSquare,
-  Scale,
   ShieldCheck,
   Sparkles,
-  Users,
-  Bot,
   UserCircle,
 } from "lucide-react";
 import { ChatShell } from "@/components/ChatShell";
@@ -27,13 +22,13 @@ import {
 } from "@/components/DemographicsForm";
 import { LikertBlock } from "@/components/LikertBlock";
 import { PageHeader } from "@/components/PageHeader";
-import { SectionHeading } from "@/components/SectionHeading";
+import { SurveyGroupHeading } from "@/components/SurveyGroupHeading";
 import { ConsentFormContent } from "@/components/ConsentFormContent";
+import { FormErrorAlert } from "@/components/FormErrorAlert";
+import { DebriefFinish } from "@/components/DebriefFinish";
+import { ScreenedOutFinish } from "@/components/ScreenedOutFinish";
 import {
   CONSENT_FORM,
-  EMPTY_PUBLICATION_CONSENT,
-  hasPublicationChoice,
-  type PublicationConsentValues,
 } from "@/content/consent";
 import {
   SCENARIOS,
@@ -41,6 +36,7 @@ import {
   USER_TASK_CHAT_INSTRUCTIONS,
 } from "@/content/scenarios";
 import {
+  DEMOGRAPHICS,
   POST_SURVEY,
   POST_SURVEY_LIKERT_KEYS,
   PRE_MODERATORS,
@@ -55,6 +51,12 @@ import { maxUserTurns, STUDY } from "@/lib/study-config";
 import {
   captureCloudResearchParams,
 } from "@/lib/cloudresearch-params";
+import type { SessionRestorePayload } from "@/lib/session-restore-types";
+import {
+  clearStudySessionParticipantId,
+  persistStudySessionParticipantId,
+  readStudySessionParticipantId,
+} from "@/lib/study-session-storage";
 import { INITIAL_STATE, type ExperimentState } from "@/lib/types";
 import { scrollPageToTop, useFadeTransition } from "@/lib/use-fade-transition";
 
@@ -69,6 +71,25 @@ function allLikertAnswered(
   return keys.every((k) => values[k] !== null);
 }
 
+async function fetchSessionRestore(
+  query: { participantId?: string; assignmentId?: string }
+): Promise<SessionRestorePayload | null> {
+  const params = new URLSearchParams();
+  if (query.participantId) {
+    params.set("participantId", query.participantId);
+  }
+  if (query.assignmentId) {
+    params.set("assignmentId", query.assignmentId);
+  }
+
+  const res = await fetch(`/api/session?${params.toString()}`);
+  if (!res.ok) {
+    return null;
+  }
+
+  return (await res.json()) as SessionRestorePayload;
+}
+
 export function ExperimentApp() {
   const [state, setState] = useState<ExperimentState>({
     ...INITIAL_STATE,
@@ -76,11 +97,10 @@ export function ExperimentApp() {
   });
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+  const [sessionBootstrapping, setSessionBootstrapping] = useState(true);
 
   const [accessCode, setAccessCode] = useState("");
   const [consentAgreed, setConsentAgreed] = useState(false);
-  const [publicationConsent, setPublicationConsent] =
-    useState<PublicationConsentValues>(EMPTY_PUBLICATION_CONSENT);
   const [screening, setScreening] = useState<Record<string, string>>({});
 
   const [preModerators, setPreModerators] = useState(() =>
@@ -97,6 +117,64 @@ export function ExperimentApp() {
   );
   const [chatInput, setChatInput] = useState("");
   const { visible: stageVisible, run: withStageFade } = useFadeTransition();
+
+  const applySessionRestore = useCallback((session: SessionRestorePayload) => {
+    persistStudySessionParticipantId(session.participantId);
+
+    if (session.screening) {
+      setScreening(session.screening);
+    }
+    setConsentAgreed(session.consentAgreed);
+
+    setState((s) => ({
+      ...s,
+      participantId: session.participantId,
+      stage: session.stage,
+      scenarioIndex: session.scenarioIndex,
+      scenarioOrder: session.scenarioOrder,
+      experiencedScenarioIndex: session.experiencedScenarioIndex,
+      assignedCondition: session.assignedCondition,
+      messages: session.messages,
+      turnCount: session.turnCount,
+      refusalDelivered: session.refusalDelivered,
+    }));
+  }, []);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    async function bootstrapSession() {
+      const storedParticipantId = readStudySessionParticipantId();
+      const captured = captureCloudResearchParams(window.location.search);
+      const assignmentId = captured.cloudresearch_assignment_id;
+
+      let session: SessionRestorePayload | null = null;
+
+      if (storedParticipantId) {
+        session = await fetchSessionRestore({ participantId: storedParticipantId });
+      }
+
+      if (!session && assignmentId) {
+        session = await fetchSessionRestore({ assignmentId });
+      }
+
+      if (cancelled) return;
+
+      if (session) {
+        applySessionRestore(session);
+      } else if (storedParticipantId) {
+        clearStudySessionParticipantId();
+      }
+
+      setSessionBootstrapping(false);
+    }
+
+    void bootstrapSession();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [applySessionRestore]);
 
   useEffect(() => {
     scrollPageToTop();
@@ -185,6 +263,19 @@ export function ExperimentApp() {
         }
         throw new Error(msg);
       }
+
+      persistStudySessionParticipantId(data.participantId);
+
+      if (data.resumed) {
+        const session = await fetchSessionRestore({
+          participantId: data.participantId,
+        });
+        if (session) {
+          applySessionRestore(session);
+          return;
+        }
+      }
+
       setState((s) => ({
         ...s,
         participantId: data.participantId,
@@ -201,7 +292,7 @@ export function ExperimentApp() {
     setError(null);
     for (const item of SCREENING.items) {
       if (!screening[item.key]) {
-        setError("Please answer all screening questions.");
+        setError("Please answer the screening question.");
         return;
       }
     }
@@ -230,12 +321,6 @@ export function ExperimentApp() {
 
   const handleConsentContinue = async () => {
     setError(null);
-    if (!hasPublicationChoice(publicationConsent)) {
-      setError(
-        "Please select at least one publication option, or choose Disagree and enter a pseudonym."
-      );
-      return;
-    }
 
     setLoading(true);
     try {
@@ -243,7 +328,6 @@ export function ExperimentApp() {
         section: "consent",
         responses: {
           agreed: true,
-          publication: publicationConsent,
         },
       });
 
@@ -433,6 +517,18 @@ export function ExperimentApp() {
     }
   };
 
+  if (sessionBootstrapping) {
+    return (
+      <main className="page-shell">
+        <PageHeader
+          title="Welcome"
+          lead="Restoring your session…"
+          icon={Sparkles}
+        />
+      </main>
+    );
+  }
+
   const scenarioType = currentScenarioType(state);
   const scenario = SCENARIOS[scenarioType];
 
@@ -446,12 +542,6 @@ export function ExperimentApp() {
             : ""
       }`}
     >
-      {error ? (
-        <p className="alert-error mb-6" role="alert">
-          {error}
-        </p>
-      ) : null}
-
       {state.stage === "landing" && (
         <>
           <PageHeader
@@ -480,14 +570,17 @@ export function ExperimentApp() {
                 autoComplete="off"
               />
             </div>
-            <button
-              type="button"
-              className="btn-primary shrink-0 sm:mb-0.5"
-              disabled={loading}
-              onClick={() => void handleBegin()}
-            >
-              {loading ? "Starting…" : "Begin"}
-            </button>
+            <div className="flex flex-col gap-3 sm:shrink-0">
+              <FormErrorAlert message={error} />
+              <button
+                type="button"
+                className="btn-primary sm:mb-0.5"
+                disabled={loading}
+                onClick={() => void handleBegin()}
+              >
+                {loading ? "Starting…" : "Begin"}
+              </button>
+            </div>
           </div>
         </>
       )}
@@ -495,8 +588,8 @@ export function ExperimentApp() {
       {state.stage === "screening" && (
         <>
           <PageHeader
-            title="Screening Questions"
-            lead="Please answer the following questions to confirm your eligibility."
+            title="Screening Question"
+            lead="Please answer the following question to confirm your eligibility."
             icon={ClipboardList}
           />
           <div className="card space-y-8">
@@ -524,38 +617,30 @@ export function ExperimentApp() {
                 </div>
               </fieldset>
             ))}
-            <button
-              type="button"
-              className="btn-primary inline-flex items-center gap-2"
-              disabled={loading}
-              onClick={() => void handleScreeningContinue()}
-            >
-              Continue
-              <ArrowRight size={18} strokeWidth={2} aria-hidden />
-            </button>
+            <div className="space-y-4">
+              <FormErrorAlert message={error} />
+              <button
+                type="button"
+                className="btn-primary inline-flex items-center gap-2"
+                disabled={loading}
+                onClick={() => void handleScreeningContinue()}
+              >
+                Continue
+                <ArrowRight size={18} strokeWidth={2} aria-hidden />
+              </button>
+            </div>
           </div>
         </>
       )}
 
-      {state.stage === "screened_out" && (
-        <>
-          <PageHeader
-            title="Thank You"
-            lead="Based on your responses, you are not eligible for this study. You may close this window."
-            icon={CheckCircle2}
-          />
-        </>
-      )}
+      {state.stage === "screened_out" && <ScreenedOutFinish />}
 
       {state.stage === "consent" && (
         <>
           <PageHeader title={CONSENT_FORM.pageTitle} icon={ClipboardList} />
           <div className="card">
-            <ConsentFormContent
-              publication={publicationConsent}
-              onPublicationChange={setPublicationConsent}
-            />
-            <hr className="my-8 border-border" />
+            <ConsentFormContent />
+            <hr className="survey-group-divider" />
             <label className="checkbox-row mb-6">
               <input
                 type="checkbox"
@@ -572,19 +657,18 @@ export function ExperimentApp() {
                 {CONSENT_FORM.agreementLabel}
               </span>
             </label>
-            <button
-              type="button"
-              className="btn-primary inline-flex items-center gap-2"
-              disabled={
-                !consentAgreed ||
-                !hasPublicationChoice(publicationConsent) ||
-                loading
-              }
-              onClick={() => void handleConsentContinue()}
-            >
-              Continue
-              <ArrowRight size={18} strokeWidth={2} aria-hidden />
-            </button>
+            <div className="space-y-4">
+              <FormErrorAlert message={error} />
+              <button
+                type="button"
+                className="btn-primary inline-flex items-center gap-2"
+                disabled={!consentAgreed || loading}
+                onClick={() => void handleConsentContinue()}
+              >
+                Continue
+                <ArrowRight size={18} strokeWidth={2} aria-hidden />
+              </button>
+            </div>
           </div>
         </>
       )}
@@ -592,17 +676,14 @@ export function ExperimentApp() {
       {state.stage === "pre_moderators" && (
         <>
           <PageHeader
-            title="A Few Questions About You"
-            lead="There are no right or wrong answers."
+            title={PRE_MODERATORS.title}
+            lead={PRE_MODERATORS.lead}
             icon={ClipboardPen}
           />
           <div className="card">
-            <p className="mb-6 text-[0.9375rem] text-muted">
-              {PRE_MODERATORS.ai_reliance.instruction}
-            </p>
-            <SectionHeading icon={Bot}>
-              {PRE_MODERATORS.ai_reliance.title}
-            </SectionHeading>
+            <SurveyGroupHeading icon={PRE_MODERATORS.ai_reliance.participantIcon}>
+              {PRE_MODERATORS.ai_reliance.participantHeading}
+            </SurveyGroupHeading>
             <LikertBlock
               items={PRE_MODERATORS.ai_reliance.items.map((i) => i.text)}
               keys={PRE_MODERATORS.ai_reliance.items.map((i) => i.key)}
@@ -613,13 +694,10 @@ export function ExperimentApp() {
                 setPreModerators((prev) => ({ ...prev, [key]: value }))
               }
             />
-            <hr className="my-8 border-border" />
-            <p className="mb-6 text-[0.9375rem] text-muted">
-              {PRE_MODERATORS.social_support.instruction}
-            </p>
-            <SectionHeading icon={Users}>
-              {PRE_MODERATORS.social_support.title}
-            </SectionHeading>
+            <hr className="survey-group-divider" />
+            <SurveyGroupHeading icon={PRE_MODERATORS.social_support.participantIcon}>
+              {PRE_MODERATORS.social_support.participantHeading}
+            </SurveyGroupHeading>
             <LikertBlock
               items={PRE_MODERATORS.social_support.items.map((i) => i.text)}
               keys={PRE_MODERATORS.social_support.items.map((i) => i.key)}
@@ -630,13 +708,10 @@ export function ExperimentApp() {
                 setPreModerators((prev) => ({ ...prev, [key]: value }))
               }
             />
-            <hr className="my-8 border-border" />
-            <p className="mb-6 text-[0.9375rem] text-muted">
-              {PRE_MODERATORS.disclosure.instruction}
-            </p>
-            <SectionHeading icon={HeartHandshake}>
-              {PRE_MODERATORS.disclosure.title}
-            </SectionHeading>
+            <hr className="survey-group-divider" />
+            <SurveyGroupHeading icon={PRE_MODERATORS.disclosure.participantIcon}>
+              {PRE_MODERATORS.disclosure.participantHeading}
+            </SurveyGroupHeading>
             <LikertBlock
               items={PRE_MODERATORS.disclosure.items.map((i) => i.text)}
               keys={PRE_MODERATORS.disclosure.items.map((i) => i.key)}
@@ -647,15 +722,18 @@ export function ExperimentApp() {
                 setPreModerators((prev) => ({ ...prev, [key]: value }))
               }
             />
-            <button
-              type="button"
-              className="btn-primary mt-8 inline-flex items-center gap-2"
-              disabled={loading}
-              onClick={() => void handlePreModeratorsContinue()}
-            >
-              Continue to scenario
-              <ArrowRight size={18} strokeWidth={2} aria-hidden />
-            </button>
+            <div className="mt-8 space-y-4">
+              <FormErrorAlert message={error} />
+              <button
+                type="button"
+                className="btn-primary inline-flex items-center gap-2"
+                disabled={loading}
+                onClick={() => void handlePreModeratorsContinue()}
+              >
+                Continue to scenario
+                <ArrowRight size={18} strokeWidth={2} aria-hidden />
+              </button>
+            </div>
           </div>
         </>
       )}
@@ -668,6 +746,7 @@ export function ExperimentApp() {
             title={scenarioDisplayTitle(scenarioType)}
             text={scenario.text}
             loading={loading}
+            error={error}
             onContinue={() => void handleScenarioViewContinue()}
           />
         </div>
@@ -687,6 +766,7 @@ export function ExperimentApp() {
             onSend={() => void handleSendMessage()}
             isLoading={loading}
             refusalDelivered={state.refusalDelivered}
+            error={error}
             onContinue={() => void handleContinueToPostSurvey()}
             continueLabel="Continue to survey"
           />
@@ -698,17 +778,14 @@ export function ExperimentApp() {
           className={`stage-transition ${stageVisible ? "stage-transition-visible" : ""}`}
         >
           <PageHeader
-            title="Your Thoughts"
-            lead="Please answer based on the conversation you just had."
+            title={POST_SURVEY.title}
+            lead={POST_SURVEY.lead}
             icon={MessageSquare}
           />
           <div className="card">
-            <p className="mb-6 text-[0.9375rem] text-muted">
-              {POST_SURVEY.understanding.instruction}
-            </p>
-            <SectionHeading icon={Compass}>
-              {POST_SURVEY.understanding.title}
-            </SectionHeading>
+            <SurveyGroupHeading icon={POST_SURVEY.understanding.participantIcon}>
+              {POST_SURVEY.understanding.participantHeading}
+            </SurveyGroupHeading>
             <LikertBlock
               items={POST_SURVEY.understanding.items.map((i) => i.text)}
               keys={POST_SURVEY.understanding.items.map((i) => i.key)}
@@ -719,10 +796,10 @@ export function ExperimentApp() {
                 setPostLikert((prev) => ({ ...prev, [key]: value }))
               }
             />
-            <hr className="my-8 border-border" />
-            <SectionHeading icon={Users}>
-              {POST_SURVEY.agency.title}
-            </SectionHeading>
+            <hr className="survey-group-divider" />
+            <SurveyGroupHeading icon={POST_SURVEY.agency.participantIcon}>
+              {POST_SURVEY.agency.participantHeading}
+            </SurveyGroupHeading>
             <LikertBlock
               items={POST_SURVEY.agency.items.map((i) => i.text)}
               keys={POST_SURVEY.agency.items.map((i) => i.key)}
@@ -733,10 +810,10 @@ export function ExperimentApp() {
                 setPostLikert((prev) => ({ ...prev, [key]: value }))
               }
             />
-            <hr className="my-8 border-border" />
-            <SectionHeading icon={HeartHandshake}>
-              {POST_SURVEY.continuity.title}
-            </SectionHeading>
+            <hr className="survey-group-divider" />
+            <SurveyGroupHeading icon={POST_SURVEY.continuity.participantIcon}>
+              {POST_SURVEY.continuity.participantHeading}
+            </SurveyGroupHeading>
             <LikertBlock
               items={POST_SURVEY.continuity.items.map((i) => i.text)}
               keys={POST_SURVEY.continuity.items.map((i) => i.key)}
@@ -747,13 +824,10 @@ export function ExperimentApp() {
                 setPostLikert((prev) => ({ ...prev, [key]: value }))
               }
             />
-            <hr className="my-8 border-border" />
-            <SectionHeading icon={Compass}>
-              {POST_SURVEY.intention.title}
-            </SectionHeading>
-            <p className="mb-4 text-[0.9375rem] text-muted">
-              {POST_SURVEY.intention.instruction}
-            </p>
+            <hr className="survey-group-divider" />
+            <SurveyGroupHeading icon={POST_SURVEY.intention.participantIcon}>
+              {POST_SURVEY.intention.participantHeading}
+            </SurveyGroupHeading>
             <LikertBlock
               items={POST_SURVEY.intention.items.map((i) => i.text)}
               keys={POST_SURVEY.intention.items.map((i) => i.key)}
@@ -764,11 +838,8 @@ export function ExperimentApp() {
                 setPostLikert((prev) => ({ ...prev, [key]: value }))
               }
             />
-            <hr className="my-8 border-border" />
-            <SectionHeading icon={Compass}>
-              {POST_SURVEY.behavioral_choice.title}
-            </SectionHeading>
-            <p className="mb-4 text-[0.9375rem] text-muted">
+            <hr className="survey-group-divider" />
+            <p className="mb-4 text-xl font-medium leading-snug text-ink sm:text-[1.1875rem]">
               {POST_SURVEY.behavioral_choice.prompt}
             </p>
             <div className="space-y-2">
@@ -785,10 +856,10 @@ export function ExperimentApp() {
                 </label>
               ))}
             </div>
-            <hr className="my-8 border-border" />
-            <SectionHeading icon={Scale}>
-              {POST_SURVEY.manipulation_attitude.title}
-            </SectionHeading>
+            <hr className="survey-group-divider" />
+            <SurveyGroupHeading icon={POST_SURVEY.manipulationParticipantIcon}>
+              {POST_SURVEY.manipulationParticipantHeading}
+            </SurveyGroupHeading>
             <LikertBlock
               items={POST_SURVEY.manipulation_attitude.items.map((i) => i.text)}
               keys={POST_SURVEY.manipulation_attitude.items.map((i) => i.key)}
@@ -799,10 +870,7 @@ export function ExperimentApp() {
                 setPostLikert((prev) => ({ ...prev, [key]: value }))
               }
             />
-            <hr className="my-8 border-border" />
-            <SectionHeading icon={Scale}>
-              {POST_SURVEY.manipulation_norms.title}
-            </SectionHeading>
+            <hr className="survey-group-divider" />
             <LikertBlock
               items={POST_SURVEY.manipulation_norms.items.map((i) => i.text)}
               keys={POST_SURVEY.manipulation_norms.items.map((i) => i.key)}
@@ -813,10 +881,7 @@ export function ExperimentApp() {
                 setPostLikert((prev) => ({ ...prev, [key]: value }))
               }
             />
-            <hr className="my-8 border-border" />
-            <SectionHeading icon={Scale}>
-              {POST_SURVEY.manipulation_pbc.title}
-            </SectionHeading>
+            <hr className="survey-group-divider" />
             <LikertBlock
               items={POST_SURVEY.manipulation_pbc.items.map((i) => i.text)}
               keys={POST_SURVEY.manipulation_pbc.items.map((i) => i.key)}
@@ -827,15 +892,18 @@ export function ExperimentApp() {
                 setPostLikert((prev) => ({ ...prev, [key]: value }))
               }
             />
-            <button
-              type="button"
-              className="btn-primary mt-8 inline-flex items-center gap-2"
-              disabled={loading}
-              onClick={() => void handlePostSurveySubmit()}
-            >
-              Continue
-              <ArrowRight size={18} strokeWidth={2} aria-hidden />
-            </button>
+            <div className="mt-8 space-y-4">
+              <FormErrorAlert message={error} />
+              <button
+                type="button"
+                className="btn-primary inline-flex items-center gap-2"
+                disabled={loading}
+                onClick={() => void handlePostSurveySubmit()}
+              >
+                Continue
+                <ArrowRight size={18} strokeWidth={2} aria-hidden />
+              </button>
+            </div>
           </div>
         </div>
       )}
@@ -843,39 +911,30 @@ export function ExperimentApp() {
       {state.stage === "demographics" && (
         <>
           <PageHeader
-            title="About you"
-            lead="Almost done — a few final questions."
+            title={DEMOGRAPHICS.title}
+            lead={DEMOGRAPHICS.lead}
             icon={UserCircle}
           />
           <div className="card">
             <DemographicsForm values={demographics} onChange={setDemographics} />
-            <button
-              type="button"
-              className="btn-primary mt-8 inline-flex items-center gap-2"
-              disabled={loading}
-              onClick={() => void handleDemographicsSubmit()}
-            >
-              Submit
-              <ArrowRight size={18} strokeWidth={2} aria-hidden />
-            </button>
+            <div className="mt-8 space-y-4">
+              <FormErrorAlert message={error} />
+              <button
+                type="button"
+                className="btn-primary inline-flex items-center gap-2"
+                disabled={loading}
+                onClick={() => void handleDemographicsSubmit()}
+              >
+                Submit
+                <ArrowRight size={18} strokeWidth={2} aria-hidden />
+              </button>
+            </div>
           </div>
         </>
       )}
 
       {state.stage === "debrief" && (
-        <>
-          <PageHeader
-            title="You're All Done"
-            lead="Thank you for your time. You may close this browser window when you're ready."
-            icon={CheckCircle2}
-          />
-          <div className="card">
-            <p className="text-base leading-relaxed text-ink">
-              If you have questions about this research, please contact the study
-              team at <strong>[researcher email]</strong>.
-            </p>
-          </div>
-        </>
+        <DebriefFinish participantId={state.participantId} />
       )}
     </main>
   );

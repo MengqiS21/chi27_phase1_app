@@ -19,7 +19,6 @@ export function assignPhase1(slotIndex: number, slot: Phase1AllocationSlot) {
     interactionScenario: PHASE1_SCENARIO,
     assignedCondition,
     conditionLabel: slot.conditionLabel,
-    conditionOrder: [assignedCondition],
     transitionTriggerT: TRANSITION_TRIGGER_T,
   };
 }

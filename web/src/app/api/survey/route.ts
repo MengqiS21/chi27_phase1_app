@@ -34,9 +34,6 @@ export async function POST(request: Request) {
 
     const updatePayload: Record<string, unknown> = {};
     if (nextStage) updatePayload.stage = nextStage;
-    if (scenarioIndex !== undefined && scenarioIndex !== null) {
-      updatePayload.current_scenario_index = scenarioIndex;
-    }
     if (complete) {
       updatePayload.completed_at = new Date().toISOString();
       updatePayload.stage = "debrief";

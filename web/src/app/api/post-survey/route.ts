@@ -45,7 +45,6 @@ export async function POST(request: Request) {
         .from("participants")
         .update({
           stage: "scenario_chat",
-          current_scenario_index: nextIndex,
         })
         .eq("id", participantId);
 

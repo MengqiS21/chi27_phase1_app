@@ -16,6 +16,31 @@ export async function POST(request: Request) {
     }
 
     const supabase = getSupabase();
+    const crFields = cloudResearchInsertFields(body);
+    const assignmentId = crFields.cloudresearch_assignment_id as
+      | string
+      | undefined;
+
+    if (assignmentId) {
+      const { data: existing, error: lookupError } = await supabase
+        .from("participants")
+        .select("id")
+        .eq("study", "phase1")
+        .eq("cloudresearch_assignment_id", assignmentId)
+        .maybeSingle();
+
+      if (lookupError) {
+        return NextResponse.json({ error: lookupError.message }, { status: 500 });
+      }
+
+      if (existing?.id) {
+        return NextResponse.json({
+          participantId: existing.id,
+          study: "phase1",
+          resumed: true,
+        });
+      }
+    }
 
     const { data, error } = await supabase
       .from("participants")
@@ -23,7 +48,7 @@ export async function POST(request: Request) {
         access_code: code,
         study: "phase1",
         stage: "screening",
-        ...cloudResearchInsertFields(body),
+        ...crFields,
       })
       .select("id")
       .single();
@@ -35,6 +60,7 @@ export async function POST(request: Request) {
     return NextResponse.json({
       participantId: data.id,
       study: "phase1",
+      resumed: false,
     });
   } catch (e) {
     const message = e instanceof Error ? e.message : "Unknown error";

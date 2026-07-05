@@ -1,14 +1,7 @@
+import type { SurveyGroupIconKey } from "@/content/survey-group-icons";
+
 export const SCREENING = {
   items: [
-    {
-      key: "scr1",
-      text: "Are you 21 years of age or older?",
-      options: [
-        { value: "yes", label: "Yes" },
-        { value: "no", label: "No" },
-      ],
-      screenOut: "no",
-    },
     {
       key: "scr2",
       text: "Have you ever used an AI tool, such as a chatbot or AI assistant, to seek emotional support or to talk through something personal or emotional?",
@@ -22,8 +15,12 @@ export const SCREENING = {
 } as const;
 
 export const PRE_MODERATORS = {
+  title: "Before we begin",
+  lead: "The next sections ask about your everyday experiences.",
   ai_reliance: {
     title: "AI reliance",
+    participantHeading: "When life feels personal or heavy",
+    participantIcon: "bot" as SurveyGroupIconKey,
     scale: "agree5" as const,
     instruction:
       "Please rate how much you agree with each statement (1 = Strongly disagree, 5 = Strongly agree).",
@@ -44,6 +41,8 @@ export const PRE_MODERATORS = {
   },
   social_support: {
     title: "Social support",
+    participantHeading: "When you need someone to lean on",
+    participantIcon: "users" as SurveyGroupIconKey,
     scale: "agree7" as const,
     instruction:
       "Please rate how much you agree with each statement (1 = Very strongly disagree, 7 = Very strongly agree).",
@@ -68,6 +67,8 @@ export const PRE_MODERATORS = {
   },
   disclosure: {
     title: "Disclosure comfort",
+    participantHeading: "The kinds of things people might type into a chat",
+    participantIcon: "message-square" as SurveyGroupIconKey,
     scale: "comfort5" as const,
     instruction:
       "How comfortable would you be discussing each of the following with an AI chat tool? (1 = Very uncomfortable, 5 = Very comfortable)",
@@ -82,8 +83,15 @@ export const PRE_MODERATORS = {
 } as const;
 
 export const POST_SURVEY = {
+  title: "After the conversation",
+  lead: "The following statements refer to the conversation you just had.",
+  /** One heading for attitude + norms + pbc blocks. */
+  manipulationParticipantHeading: "What the AI suggested about going further",
+  manipulationParticipantIcon: "forward" as SurveyGroupIconKey,
   understanding: {
     title: "Perceived understanding",
+    participantHeading: "The AI's response, in hindsight",
+    participantIcon: "lightbulb" as SurveyGroupIconKey,
     scale: "agree5" as const,
     instruction:
       "Please rate how much you agree with each statement (1 = Strongly disagree, 5 = Strongly agree).",
@@ -98,6 +106,8 @@ export const POST_SURVEY = {
   },
   agency: {
     title: "Perceived agency",
+    participantHeading: "Where you stood when the chat ended",
+    participantIcon: "compass" as SurveyGroupIconKey,
     scale: "agree5" as const,
     items: [
       {
@@ -116,6 +126,8 @@ export const POST_SURVEY = {
   },
   continuity: {
     title: "Perceived relational continuity",
+    participantHeading: "The way the exchange unfolded",
+    participantIcon: "messages-square" as SurveyGroupIconKey,
     scale: "agree5" as const,
     items: [
       {
@@ -124,17 +136,19 @@ export const POST_SURVEY = {
       },
       {
         key: "con2",
-        text: "As the AI moved toward suggesting other support, the conversation still felt personal and continuous.",
+        text: "Throughout the conversation, I felt the AI stayed connected to what I was sharing.",
       },
       {
         key: "con3",
-        text: "The way the conversation shifted felt abrupt and disconnected.",
+        text: "At times, the AI's responses felt abrupt or disconnected from what I had shared.",
         reverseScored: true,
       },
     ],
   },
   intention: {
     title: "Help-seeking intention",
+    participantHeading: "From here, looking forward",
+    participantIcon: "arrow-right" as SurveyGroupIconKey,
     scale: "intention7" as const,
     instruction:
       "Please rate how much you agree with each statement (1 = Strongly disagree, 7 = Strongly agree).",
@@ -241,6 +255,8 @@ export const POST_SURVEY = {
 } as const;
 
 export const DEMOGRAPHICS = {
+  title: "About you",
+  lead: "Almost done.",
   age: {
     key: "dem1",
     label: "What is your age?",
@@ -303,16 +319,18 @@ export const DEMOGRAPHICS = {
     label: "What country or region do you currently live in?",
     type: "text" as const,
   },
-  englishFirst: {
+  aiEmotionalUseFrequency: {
     key: "dem7",
-    label: "Is English your first language?",
-    options: ["Yes", "No", "Prefer not to say"],
-  },
-  englishComfort: {
-    key: "dem8",
     label:
-      "Are you able to read and complete surveys and interviews comfortably in English?",
-    options: ["Yes", "No"],
+      "How often do you currently use AI tools to discuss personal, emotional, or stressful experiences?",
+    options: [
+      "Never",
+      "Less than monthly",
+      "Monthly",
+      "Weekly",
+      "Several times per week",
+      "Daily",
+    ],
   },
 } as const;
 

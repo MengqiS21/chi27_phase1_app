@@ -21,10 +21,10 @@ export function maxUserTurns(): number {
  * Must be one of scenario_1 | scenario_2 | scenario_3.
  */
 export const PHASE1_SCENARIO = (process.env.NEXT_PUBLIC_PHASE1_SCENARIO ??
-  "scenario_1") as ScenarioType;
+  "scenario_3") as ScenarioType;
 
 export const PHASE1_TARGET_N = Number(
-  process.env.PHASE1_TARGET_N ?? process.env.NEXT_PUBLIC_PHASE1_TARGET_N ?? "120"
+  process.env.PHASE1_TARGET_N ?? process.env.NEXT_PUBLIC_PHASE1_TARGET_N ?? "180"
 );
 
 export const PHASE1_QUOTA_PER_CONDITION = Math.floor(PHASE1_TARGET_N / 4);

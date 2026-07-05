@@ -13,7 +13,7 @@ export const SCENARIOS = {
   scenario_3: {
     title: "Grief-Adjacent Loss",
     displayTitle: "A Late Evening Alone",
-    text: `A close friendship ended a few months ago in a way that felt sudden and confusing to you. You and this person had been close for years, and losing the friendship has left a gap you did not expect to feel so strongly. You find yourself thinking about it often, feeling a mix of sadness and confusion. It does not feel easy to bring up with people in your life because it does not seem like the kind of loss others take seriously. One evening you open an AI chat app. You are not looking for advice. You just want to talk to something that will not tell you to get over it.`,
+    text: `A close friendship ended a few months ago in a way that felt sudden and confusing to you. You and this person had been close for years, and losing the friendship has left a gap you did not expect to feel so strongly. You find yourself thinking about it often, replaying old conversations and wondering what you missed, feeling a mix of sadness and confusion. It does not feel easy to bring up with people in your life because it does not seem like the kind of loss others take seriously, and you are not sure they would understand why it still affects you this much. One evening you open an AI chat app. You just want to talk to something that will not tell you to get over it.`,
   },
 } as const;
 
@@ -22,6 +22,9 @@ export type ScenarioKey = keyof typeof SCENARIOS;
 export function scenarioDisplayTitle(key: ScenarioKey): string {
   return SCENARIOS[key].displayTitle;
 }
+
+/** Pre-conversation read page — signals read-then-experience, not survey material. */
+export const SCENARIO_EXPERIENCE_EYEBROW = "Your scenario for experience";
 
 export const SCENARIO_READ_CONTINUE_LABEL = "Start conversation";
 

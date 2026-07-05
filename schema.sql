@@ -1,8 +1,8 @@
 -- =============================================================================
 -- CHI'27 Experiment Platform — Supabase setup (run entire file once)
 -- Supports both Pilot and Phase 1 studies in one database.
---
--- Keep identical to chi27_pilot_app/schema.sql (single shared schema).
+-- Tier 2 schema: lean participants + survey_responses; conversations unchanged.
+-- Keep identical to chi27_pilot_app/schema.sql
 -- =============================================================================
 
 -- -----------------------------------------------------------------------------
@@ -23,30 +23,29 @@ CREATE TABLE IF NOT EXISTS participants (
   pilot_group TEXT,
   interaction_scenario TEXT,
   condition_label TEXT,
-  transition_trigger_t INTEGER,
   latin_square_row INTEGER,
-  condition_order JSONB,
-  current_scenario_index INTEGER DEFAULT 0,
   stage TEXT DEFAULT 'landing',
   started_at TIMESTAMPTZ DEFAULT now(),
   completed_at TIMESTAMPTZ
 );
 
--- Migration helpers (safe to re-run)
+-- Migration helpers (safe to re-run on DBs created from older schema)
 ALTER TABLE participants ADD COLUMN IF NOT EXISTS study TEXT DEFAULT 'pilot';
 ALTER TABLE participants ADD COLUMN IF NOT EXISTS experienced_scenario_index INTEGER;
 ALTER TABLE participants ADD COLUMN IF NOT EXISTS assigned_condition TEXT;
 ALTER TABLE participants ADD COLUMN IF NOT EXISTS pilot_group TEXT;
 ALTER TABLE participants ADD COLUMN IF NOT EXISTS interaction_scenario TEXT;
 ALTER TABLE participants ADD COLUMN IF NOT EXISTS condition_label TEXT;
-ALTER TABLE participants ADD COLUMN IF NOT EXISTS transition_trigger_t INTEGER;
 ALTER TABLE participants ADD COLUMN IF NOT EXISTS cloudresearch_participant_id TEXT;
 ALTER TABLE participants ADD COLUMN IF NOT EXISTS cloudresearch_assignment_id TEXT;
 ALTER TABLE participants ADD COLUMN IF NOT EXISTS cloudresearch_hit_id TEXT;
 ALTER TABLE participants ADD COLUMN IF NOT EXISTS url_query_raw TEXT;
 
--- Drop legacy pre-survey columns if migrating from old schema (optional)
--- ALTER TABLE participants DROP COLUMN IF EXISTS age;
+ALTER TABLE participants DROP COLUMN IF EXISTS condition_order;
+ALTER TABLE participants DROP COLUMN IF EXISTS transition_trigger_t;
+ALTER TABLE participants DROP COLUMN IF EXISTS current_scenario_index;
+
+CREATE INDEX IF NOT EXISTS participants_study_idx ON participants (study);
 
 -- -----------------------------------------------------------------------------
 -- Conversations (one row per participant + scenario chat session)
@@ -86,11 +85,18 @@ CREATE INDEX IF NOT EXISTS conversations_participant_id_idx
 
 -- -----------------------------------------------------------------------------
 -- Survey responses (flexible JSONB for all questionnaire sections)
+--
+-- Common section values:
+--   screening, consent, section_a, section_b, section_c, demographics
+--   pre_moderators, post_survey (phase1)
+--   assignment_meta — frozen assignment snapshot at randomization, e.g.
+--     { transition_trigger_t, scenario, condition_label, allocation_slot_index,
+--       pilot_group? }
 -- -----------------------------------------------------------------------------
 
 CREATE TABLE IF NOT EXISTS survey_responses (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  participant_id UUID REFERENCES participants(id),
+  participant_id UUID NOT NULL REFERENCES participants(id) ON DELETE CASCADE,
   section TEXT NOT NULL,
   scenario_index INTEGER,
   scenario_type TEXT,
@@ -98,18 +104,16 @@ CREATE TABLE IF NOT EXISTS survey_responses (
   submitted_at TIMESTAMPTZ DEFAULT now()
 );
 
--- Legacy table — not used by current pilot/phase1 web apps (kept for old exports)
-CREATE TABLE IF NOT EXISTS scenario_responses (
-  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  participant_id UUID REFERENCES participants(id),
-  scenario_index INTEGER,
-  scenario_type TEXT,
-  condition TEXT,
-  dg_1 INTEGER, dg_2 INTEGER, dg_3 INTEGER, dg_4 INTEGER,
-  bi_follow INTEGER, bi_retry INTEGER, bi_switch INTEGER, bi_alone INTEGER,
-  med_understanding INTEGER, med_agency INTEGER, med_refusal INTEGER,
-  submitted_at TIMESTAMPTZ DEFAULT now()
-);
+CREATE INDEX IF NOT EXISTS survey_responses_participant_id_idx
+  ON survey_responses (participant_id);
+
+CREATE INDEX IF NOT EXISTS survey_responses_participant_section_idx
+  ON survey_responses (participant_id, section);
+
+-- Drop legacy table (old per-scenario Likert export; web apps use survey_responses)
+DROP POLICY IF EXISTS "anon_insert_scenario_responses" ON scenario_responses;
+DROP POLICY IF EXISTS "anon_select_scenario_responses" ON scenario_responses;
+DROP TABLE IF EXISTS scenario_responses CASCADE;
 
 -- -----------------------------------------------------------------------------
 -- Row Level Security (RLS)
@@ -118,7 +122,6 @@ CREATE TABLE IF NOT EXISTS scenario_responses (
 ALTER TABLE participants ENABLE ROW LEVEL SECURITY;
 ALTER TABLE conversations ENABLE ROW LEVEL SECURITY;
 ALTER TABLE survey_responses ENABLE ROW LEVEL SECURITY;
-ALTER TABLE scenario_responses ENABLE ROW LEVEL SECURITY;
 
 DROP POLICY IF EXISTS "anon_insert_participants" ON participants;
 DROP POLICY IF EXISTS "anon_select_participants" ON participants;
@@ -128,8 +131,6 @@ DROP POLICY IF EXISTS "anon_select_conversations" ON conversations;
 DROP POLICY IF EXISTS "anon_update_conversations" ON conversations;
 DROP POLICY IF EXISTS "anon_insert_survey_responses" ON survey_responses;
 DROP POLICY IF EXISTS "anon_select_survey_responses" ON survey_responses;
-DROP POLICY IF EXISTS "anon_insert_scenario_responses" ON scenario_responses;
-DROP POLICY IF EXISTS "anon_select_scenario_responses" ON scenario_responses;
 
 CREATE POLICY "anon_insert_participants"
   ON participants FOR INSERT TO anon WITH CHECK (true);
@@ -154,9 +155,3 @@ CREATE POLICY "anon_insert_survey_responses"
 
 CREATE POLICY "anon_select_survey_responses"
   ON survey_responses FOR SELECT TO anon USING (true);
-
-CREATE POLICY "anon_insert_scenario_responses"
-  ON scenario_responses FOR INSERT TO anon WITH CHECK (true);
-
-CREATE POLICY "anon_select_scenario_responses"
-  ON scenario_responses FOR SELECT TO anon USING (true);
