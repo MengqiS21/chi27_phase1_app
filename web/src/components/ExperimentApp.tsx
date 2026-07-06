@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   ArrowRight,
   CheckCircle2,
@@ -47,7 +47,11 @@ import {
   currentCondition,
   currentScenarioType,
 } from "@/lib/experiment-helpers";
-import { maxUserTurns, STUDY } from "@/lib/study-config";
+import {
+  canContinueToSurvey as canContinueToSurveyByTime,
+  shouldForceContinueToSurvey,
+} from "@/lib/chat-timing";
+import { STUDY } from "@/lib/study-config";
 import {
   captureCloudResearchParams,
 } from "@/lib/cloudresearch-params";
@@ -116,6 +120,9 @@ export function ExperimentApp() {
     emptyDemographics
   );
   const [chatInput, setChatInput] = useState("");
+  const [chatStartedAtMs, setChatStartedAtMs] = useState<number | null>(null);
+  const [canContinueToSurvey, setCanContinueToSurvey] = useState(false);
+  const forceContinueTriggeredRef = useRef(false);
   const { visible: stageVisible, run: withStageFade } = useFadeTransition();
 
   const applySessionRestore = useCallback((session: SessionRestorePayload) => {
@@ -136,8 +143,9 @@ export function ExperimentApp() {
       assignedCondition: session.assignedCondition,
       messages: session.messages,
       turnCount: session.turnCount,
-      refusalDelivered: session.refusalDelivered,
     }));
+    setChatStartedAtMs(session.chatStartedAtMs);
+    setCanContinueToSurvey(canContinueToSurveyByTime(session.chatStartedAtMs));
   }, []);
 
   useEffect(() => {
@@ -389,6 +397,8 @@ export function ExperimentApp() {
     try {
       await withStageFade(async () => {
         await patchStage("scenario_chat", 0);
+        setChatStartedAtMs(null);
+        setCanContinueToSurvey(false);
         setState((s) => ({ ...s, stage: "scenario_chat" }));
       });
     } catch (e) {
@@ -400,11 +410,17 @@ export function ExperimentApp() {
 
   const handleSendMessage = async () => {
     const text = chatInput.trim();
-    if (!text || loading || state.refusalDelivered) return;
+    if (!text || loading) return;
 
     setError(null);
     const priorMessages = state.messages;
     const nextTurn = state.turnCount + 1;
+    const isFirstUserMessage = priorMessages.filter((m) => m.role === "user").length === 0;
+    const startedAtMs =
+      chatStartedAtMs ?? (isFirstUserMessage ? Date.now() : null);
+    if (isFirstUserMessage && startedAtMs != null) {
+      setChatStartedAtMs(startedAtMs);
+    }
 
     setChatInput("");
     setState((s) => ({
@@ -437,7 +453,6 @@ export function ExperimentApp() {
           { role: "assistant", content: data.assistantText },
         ],
         turnCount: nextTurn,
-        refusalDelivered: data.refusalDelivered ?? nextTurn >= maxUserTurns(),
       }));
     } catch (e) {
       setState((s) => ({ ...s, messages: priorMessages }));
@@ -448,20 +463,59 @@ export function ExperimentApp() {
     }
   };
 
-  const handleContinueToPostSurvey = async () => {
-    setError(null);
-    setLoading(true);
-    try {
-      await withStageFade(async () => {
-        await patchStage("post_survey", 0);
-        setState((s) => ({ ...s, stage: "post_survey" }));
-      });
-    } catch (e) {
-      setError(e instanceof Error ? e.message : "Error");
-    } finally {
-      setLoading(false);
+  const handleContinueToPostSurvey = useCallback(
+    async (options?: { forced?: boolean }) => {
+      if (
+        !options?.forced &&
+        !canContinueToSurveyByTime(chatStartedAtMs)
+      ) {
+        return;
+      }
+
+      setError(null);
+      setLoading(true);
+      try {
+        await withStageFade(async () => {
+          await patchStage("post_survey", 0);
+          setState((s) => ({ ...s, stage: "post_survey" }));
+        });
+      } catch (e) {
+        setError(e instanceof Error ? e.message : "Error");
+      } finally {
+        setLoading(false);
+      }
+    },
+    [chatStartedAtMs, patchStage, withStageFade]
+  );
+
+  useEffect(() => {
+    if (state.stage !== "scenario_chat") {
+      return;
     }
-  };
+
+    const tick = () => {
+      const eligible = canContinueToSurveyByTime(chatStartedAtMs);
+      setCanContinueToSurvey(eligible);
+
+      if (
+        shouldForceContinueToSurvey(chatStartedAtMs) &&
+        !forceContinueTriggeredRef.current
+      ) {
+        forceContinueTriggeredRef.current = true;
+        void handleContinueToPostSurvey({ forced: true });
+      }
+    };
+
+    tick();
+    const intervalId = window.setInterval(tick, 1000);
+    return () => window.clearInterval(intervalId);
+  }, [state.stage, chatStartedAtMs, handleContinueToPostSurvey]);
+
+  useEffect(() => {
+    if (state.stage !== "scenario_chat") {
+      forceContinueTriggeredRef.current = false;
+    }
+  }, [state.stage]);
 
   const handlePostSurveySubmit = async () => {
     setError(null);
@@ -765,7 +819,7 @@ export function ExperimentApp() {
             onInputChange={setChatInput}
             onSend={() => void handleSendMessage()}
             isLoading={loading}
-            refusalDelivered={state.refusalDelivered}
+            canContinueToSurvey={canContinueToSurvey}
             error={error}
             onContinue={() => void handleContinueToPostSurvey()}
             continueLabel="Continue to survey"

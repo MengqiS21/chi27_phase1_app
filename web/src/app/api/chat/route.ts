@@ -1,7 +1,6 @@
 import { NextResponse } from "next/server";
 import { getAiResponse } from "@/lib/anthropic";
 import { saveConversationTurn } from "@/lib/conversation-store";
-import { maxUserTurns } from "@/lib/study-config";
 import type { ChatMessage, Condition } from "@/lib/types";
 
 export async function POST(request: Request) {
@@ -57,7 +56,6 @@ export async function POST(request: Request) {
 
     return NextResponse.json({
       assistantText,
-      refusalDelivered: turnCount >= maxUserTurns(),
     });
   } catch (e) {
     const message = e instanceof Error ? e.message : "Unknown error";

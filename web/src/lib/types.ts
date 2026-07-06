@@ -29,7 +29,6 @@ export type ExperimentState = {
   assignedCondition: Condition | null;
   messages: ChatMessage[];
   turnCount: number;
-  refusalDelivered: boolean;
 };
 
 export const INITIAL_STATE: ExperimentState = {
@@ -42,5 +41,4 @@ export const INITIAL_STATE: ExperimentState = {
   assignedCondition: null,
   messages: [],
   turnCount: 0,
-  refusalDelivered: false,
 };

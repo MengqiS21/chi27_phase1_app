@@ -14,7 +14,7 @@ export type SessionRestorePayload = {
   assignedCondition: Condition | null;
   messages: ChatMessage[];
   turnCount: number;
-  refusalDelivered: boolean;
+  chatStartedAtMs: number | null;
   consentAgreed: boolean;
   screening: Record<string, string> | null;
 };

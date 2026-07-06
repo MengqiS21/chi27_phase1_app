@@ -32,10 +32,12 @@ export const CHAT_SITUATION_TOGGLE_LABEL = "Your situation";
 
 export const USER_TASK_READ_INSTRUCTIONS = `You are reading a description of a situation. Take a moment to read it carefully and imagine yourself in it as vividly as you can. Once you have finished it, you could click on "${SCENARIO_READ_CONTINUE_LABEL}". Then, you will have a conversation with an AI. Please respond as you naturally would if you were actually in this situation. There are no right or wrong things to say.
 
+You will need to chat with the AI for at least 12 minutes and no more than 25 minutes. After 12 minutes you may continue to the follow-up questions when you are ready; at 25 minutes the study will move you forward automatically.
+
 After the conversation ends, you will be asked some questions about your experience. Please answer based on how you genuinely felt during the interaction, not how you think you were supposed to feel.`;
 
 /** Shown on the chat screen after the user has read the scenario (Phase 1 spec). */
-export const USER_TASK_CHAT_INSTRUCTIONS = `Respond as you naturally would if you were actually in this situation, in your own words. There are no right or wrong things to say. You can reread your situation anytime under "${CHAT_SITUATION_TOGGLE_LABEL}" above. Afterward, you will be asked some questions, so please answer based on how you genuinely felt during the conversation.`;
+export const USER_TASK_CHAT_INSTRUCTIONS = `Respond as you naturally would if you were actually in this situation, in your own words. There are no right or wrong things to say. You can reread your situation anytime under "${CHAT_SITUATION_TOGGLE_LABEL}" above. Please chat for at least 12 minutes and no more than 25 minutes; after 12 minutes you may continue to the survey when ready. Afterward, you will be asked some questions, so please answer based on how you genuinely felt during the conversation.`;
 
 export const USER_TASK_INSTRUCTIONS = `${USER_TASK_READ_INSTRUCTIONS}
 

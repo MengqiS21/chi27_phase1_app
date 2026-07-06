@@ -2,19 +2,21 @@ import type { ScenarioType } from "./types";
 
 export const STUDY = "phase1" as const;
 
-/** Provisional — final value set after pilot calibration. Change here only (or via env). */
+/**
+ * User turn index when condition strategy begins (turns 1..T-1 are general-only).
+ * Phase 1: four general turns, strategy from user turn 5 onward.
+ */
 export const TRANSITION_TRIGGER_T = Number(
-  process.env.NEXT_PUBLIC_TRANSITION_TRIGGER_T ?? "3"
+  process.env.NEXT_PUBLIC_TRANSITION_TRIGGER_T ?? "5"
 );
 
-/** User turns in the transition span after T (spec: ~2–3 turns). */
-export const TRANSITION_TURN_SPAN = Number(
-  process.env.NEXT_PUBLIC_TRANSITION_TURN_SPAN ?? "3"
-);
+export const PRE_TRANSITION_USER_TURNS = Math.max(0, TRANSITION_TRIGGER_T - 1);
 
-export function maxUserTurns(): number {
-  return TRANSITION_TRIGGER_T + TRANSITION_TURN_SPAN;
-}
+/** Minimum chat duration before "Continue to survey" is enabled. */
+export const CHAT_MIN_DURATION_MS = 12 * 60 * 1000;
+
+/** Maximum chat duration — auto-advance to post-survey. */
+export const CHAT_MAX_DURATION_MS = 25 * 60 * 1000;
 
 /**
  * Single scenario for all Phase 1 participants — switch here only after pilot.

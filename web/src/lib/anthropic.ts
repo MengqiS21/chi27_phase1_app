@@ -6,7 +6,7 @@ import {
   getTransitionPhasePrompt,
 } from "@/content/system-prompts";
 import { toPlainText } from "@/lib/plain-text";
-import { TRANSITION_TRIGGER_T, maxUserTurns } from "@/lib/study-config";
+import { TRANSITION_TRIGGER_T } from "@/lib/study-config";
 import type { ChatMessage, Condition } from "./types";
 
 const DEFAULT_MODEL = "claude-sonnet-4-6";
@@ -24,14 +24,8 @@ export function buildSystemPrompt({ condition, turnCount }: ChatOptions): string
   const system = GENERAL_PROMPT_GROUP_2;
 
   if (turnCount >= TRANSITION_TRIGGER_T) {
-    const totalTransitionTurns =
-      maxUserTurns() - TRANSITION_TRIGGER_T + 1;
     const transitionTurn = turnCount - TRANSITION_TRIGGER_T + 1;
-    const phasePrompt = getTransitionPhasePrompt(
-      condition,
-      transitionTurn,
-      totalTransitionTurns
-    );
+    const phasePrompt = getTransitionPhasePrompt(condition, transitionTurn);
 
     let conditionBlock = CONDITION_INSTRUCTION_OVERRIDE;
     conditionBlock += `\n\n${CONDITION_PROMPTS[condition] ?? CONDITION_PROMPTS.A}`;

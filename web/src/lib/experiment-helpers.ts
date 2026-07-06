@@ -17,11 +17,10 @@ export function currentCondition(
 
 export function resetScenarioChat(): Pick<
   ExperimentState,
-  "messages" | "turnCount" | "refusalDelivered"
+  "messages" | "turnCount"
 > {
   return {
     messages: [],
     turnCount: 0,
-    refusalDelivered: false,
   };
 }

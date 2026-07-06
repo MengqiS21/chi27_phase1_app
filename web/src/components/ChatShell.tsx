@@ -17,7 +17,7 @@ type Props = {
   onInputChange: (value: string) => void;
   onSend: () => void;
   isLoading: boolean;
-  refusalDelivered: boolean;
+  canContinueToSurvey: boolean;
   error?: string | null;
   onContinue: () => void;
   continueLabel?: string;
@@ -32,7 +32,7 @@ export function ChatShell({
   onInputChange,
   onSend,
   isLoading,
-  refusalDelivered,
+  canContinueToSurvey,
   error = null,
   onContinue,
   continueLabel = "Continue to questions",
@@ -79,34 +79,25 @@ export function ChatShell({
       </div>
 
       <footer className="chat-shell-footer">
-        {refusalDelivered ? (
+        <div className="space-y-3">
+          <FormErrorAlert message={error} />
+          <ChatComposer
+            value={input}
+            onChange={onInputChange}
+            onSubmit={onSend}
+            loading={isLoading}
+          />
           <div className="chat-shell-continue">
-            <p className="chat-shell-continue-text">
-              The conversation has ended. When you are ready, continue to the
-              follow-up questions.
-            </p>
-            <div className="flex w-full flex-col gap-3 sm:w-auto">
-              <FormErrorAlert message={error} />
-              <button
-                type="button"
-                className="btn-primary w-full sm:w-auto"
-                onClick={onContinue}
-              >
-                {continueLabel}
-              </button>
-            </div>
+            <button
+              type="button"
+              className="btn-primary w-full sm:w-auto"
+              disabled={!canContinueToSurvey || isLoading}
+              onClick={onContinue}
+            >
+              {continueLabel}
+            </button>
           </div>
-        ) : (
-          <div className="space-y-3">
-            <FormErrorAlert message={error} />
-            <ChatComposer
-              value={input}
-              onChange={onInputChange}
-              onSubmit={onSend}
-              loading={isLoading}
-            />
-          </div>
-        )}
+        </div>
       </footer>
     </div>
   );

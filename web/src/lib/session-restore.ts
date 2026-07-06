@@ -1,5 +1,4 @@
 import type { SessionRestorePayload } from "@/lib/session-restore-types";
-import { maxUserTurns } from "@/lib/study-config";
 import { getSupabase } from "@/lib/supabase";
 import type { ChatMessage, Condition, ScenarioType, Stage } from "@/lib/types";
 
@@ -104,12 +103,12 @@ export async function buildSessionRestore(
 
   let messages: ChatMessage[] = [];
   let turnCount = 0;
-  let refusalDelivered = false;
+  let chatStartedAtMs: number | null = null;
 
   if (stage === "scenario_chat") {
     const { data: conversation, error: conversationError } = await supabase
       .from("conversations")
-      .select("messages, turn_count")
+      .select("messages, turn_count, started_at")
       .eq("participant_id", participantId)
       .eq("scenario_index", scenarioIndex)
       .maybeSingle();
@@ -122,7 +121,9 @@ export async function buildSessionRestore(
         typeof conversation.turn_count === "number"
           ? conversation.turn_count
           : messages.filter((m) => m.role === "user").length;
-      refusalDelivered = turnCount >= maxUserTurns();
+      if (turnCount > 0 && conversation.started_at) {
+        chatStartedAtMs = new Date(conversation.started_at as string).getTime();
+      }
     }
   }
 
@@ -151,7 +152,7 @@ export async function buildSessionRestore(
     assignedCondition: row.assigned_condition ?? null,
     messages,
     turnCount,
-    refusalDelivered,
+    chatStartedAtMs,
     consentAgreed,
     screening,
   };
