@@ -67,10 +67,6 @@
     @apply mt-10 border-t border-border pt-6 text-[0.9375rem] leading-relaxed text-muted;
   }
 
-  .scenario-read-actions {
-    @apply mt-8 flex justify-end;
-  }
-
   .chat-task-banner {
     @apply border-b border-border bg-page px-4 py-3 sm:px-5;
   }
@@ -151,6 +147,18 @@
 
   .btn-primary:focus-visible {
     outline-color: var(--accent);
+  }
+
+  .continue-actions {
+    @apply flex flex-col gap-4;
+  }
+
+  .continue-actions .btn-primary {
+    @apply self-end;
+  }
+
+  .continue-actions--spaced {
+    @apply mt-8;
   }
 
   .btn-secondary {
@@ -509,14 +517,6 @@
     @apply border-t border-border bg-surface px-3 py-3 sm:px-4;
   }
 
-  .chat-shell-continue {
-    @apply flex flex-col items-start gap-4 sm:flex-row sm:items-center sm:justify-between;
-  }
-
-  .chat-shell-continue-text {
-    @apply text-[0.9375rem] leading-relaxed text-muted;
-  }
-
   .chat-composer {
     @apply w-full;
   }
@@ -627,6 +627,38 @@
 
   .checkbox-row input {
     @apply mt-1 h-5 w-5 shrink-0 accent-accent;
+  }
+
+  .behavioral-rank-list {
+    @apply space-y-2;
+  }
+
+  .behavioral-rank-header {
+    @apply grid grid-cols-[1fr_44px_44px] items-center gap-3 px-1 pb-1;
+  }
+
+  .behavioral-rank-header-spacer {
+    @apply block;
+  }
+
+  .behavioral-rank-header-label {
+    @apply text-center text-sm font-semibold text-muted;
+  }
+
+  .behavioral-rank-row {
+    @apply grid min-h-[44px] grid-cols-[1fr_44px_44px] items-center gap-3 rounded-lg border border-border bg-surface px-3 py-2;
+  }
+
+  .behavioral-rank-label {
+    @apply text-base leading-snug text-ink;
+  }
+
+  .behavioral-rank-button {
+    @apply mx-auto inline-flex h-9 w-9 items-center justify-center rounded-full border border-border bg-page text-sm font-semibold text-muted transition-colors hover:border-accent hover:text-accent focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent;
+  }
+
+  .behavioral-rank-button-selected {
+    @apply border-accent bg-accent text-white hover:border-accent hover:text-white;
   }
 }
 

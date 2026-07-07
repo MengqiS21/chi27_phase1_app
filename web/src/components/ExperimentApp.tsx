@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import {
   ArrowRight,
   CheckCircle2,
@@ -12,6 +12,12 @@ import {
   Sparkles,
   UserCircle,
 } from "lucide-react";
+import {
+  BehavioralRankChoice,
+  behavioralChoiceLabel,
+  emptyBehavioralRanks,
+  validateBehavioralRanks,
+} from "@/components/BehavioralRankChoice";
 import { ChatShell } from "@/components/ChatShell";
 import { ScenarioReadPage } from "@/components/ScenarioReadPage";
 import {
@@ -121,7 +127,7 @@ export function ExperimentApp() {
   const [postLikert, setPostLikert] = useState(() =>
     emptyLikert(POST_SURVEY_LIKERT_KEYS)
   );
-  const [behavioralChoice, setBehavioralChoice] = useState("");
+  const [behavioralRanks, setBehavioralRanks] = useState(emptyBehavioralRanks);
 
   const [openResponses, setOpenResponses] = useState(() =>
     emptyOpenResponses(OPEN_QUESTION_KEYS)
@@ -207,14 +213,6 @@ export function ExperimentApp() {
       );
     }
   }, []);
-
-  const selectedChoice = useMemo(
-    () =>
-      POST_SURVEY.behavioral_choice.options.find(
-        (o) => o.key === behavioralChoice
-      ),
-    [behavioralChoice]
-  );
 
   const patchStage = useCallback(
     async (stage: string, scenarioIndex?: number) => {
@@ -534,18 +532,28 @@ export function ExperimentApp() {
       setError("Please answer all items before continuing.");
       return;
     }
-    if (!behavioralChoice) {
-      setError("Please select what you would be most likely to do next.");
+    const behavioralValidationError = validateBehavioralRanks(behavioralRanks);
+    if (behavioralValidationError) {
+      setError(behavioralValidationError);
       return;
     }
     setLoading(true);
     try {
+      const options = POST_SURVEY.behavioral_choice.options;
       await saveSurvey({
         section: "post_survey",
         responses: {
           ...postLikert,
-          cho1: behavioralChoice,
-          behavioral_choice_label: selectedChoice?.label ?? "",
+          behavioral_choice_1: behavioralRanks.rank1,
+          behavioral_choice_2: behavioralRanks.rank2,
+          behavioral_choice_1_label: behavioralChoiceLabel(
+            options,
+            behavioralRanks.rank1
+          ),
+          behavioral_choice_2_label: behavioralChoiceLabel(
+            options,
+            behavioralRanks.rank2
+          ),
         },
         scenarioIndex: 0,
         scenarioType: currentScenarioType(state),
@@ -710,7 +718,7 @@ export function ExperimentApp() {
                 </div>
               </fieldset>
             ))}
-            <div className="space-y-4">
+            <div className="continue-actions">
               <FormErrorAlert message={error} />
               <button
                 type="button"
@@ -750,7 +758,7 @@ export function ExperimentApp() {
                 {CONSENT_FORM.agreementLabel}
               </span>
             </label>
-            <div className="space-y-4">
+            <div className="continue-actions">
               <FormErrorAlert message={error} />
               <button
                 type="button"
@@ -815,7 +823,7 @@ export function ExperimentApp() {
                 setPreModerators((prev) => ({ ...prev, [key]: value }))
               }
             />
-            <div className="mt-8 space-y-4">
+            <div className="continue-actions continue-actions--spaced">
               <FormErrorAlert message={error} />
               <button
                 type="button"
@@ -935,20 +943,11 @@ export function ExperimentApp() {
             <p className="likert-statement mb-4">
               {POST_SURVEY.behavioral_choice.prompt}
             </p>
-            <div className="space-y-2">
-              {POST_SURVEY.behavioral_choice.options.map((opt) => (
-                <label key={opt.key} className="checkbox-row">
-                  <input
-                    type="radio"
-                    name="behavioral_choice"
-                    value={opt.key}
-                    checked={behavioralChoice === opt.key}
-                    onChange={() => setBehavioralChoice(opt.key)}
-                  />
-                  <span>{opt.label}</span>
-                </label>
-              ))}
-            </div>
+            <BehavioralRankChoice
+              options={POST_SURVEY.behavioral_choice.options}
+              values={behavioralRanks}
+              onChange={setBehavioralRanks}
+            />
             <hr className="survey-group-divider" />
             <SurveyGroupHeading icon={POST_SURVEY.manipulationParticipantIcon}>
               {POST_SURVEY.manipulationParticipantHeading}
@@ -985,7 +984,7 @@ export function ExperimentApp() {
                 setPostLikert((prev) => ({ ...prev, [key]: value }))
               }
             />
-            <div className="mt-8 space-y-4">
+            <div className="continue-actions continue-actions--spaced">
               <FormErrorAlert message={error} />
               <button
                 type="button"
@@ -1019,7 +1018,7 @@ export function ExperimentApp() {
                 setOpenResponses((prev) => ({ ...prev, [key]: value }))
               }
             />
-            <div className="mt-8 space-y-4">
+            <div className="continue-actions continue-actions--spaced">
               <FormErrorAlert message={error} />
               <button
                 type="button"
@@ -1044,7 +1043,7 @@ export function ExperimentApp() {
           />
           <div className="card">
             <DemographicsForm values={demographics} onChange={setDemographics} />
-            <div className="mt-8 space-y-4">
+            <div className="continue-actions continue-actions--spaced">
               <FormErrorAlert message={error} />
               <button
                 type="button"

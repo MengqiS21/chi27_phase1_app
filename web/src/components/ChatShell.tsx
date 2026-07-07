@@ -87,10 +87,10 @@ export function ChatShell({
             onSubmit={onSend}
             loading={isLoading}
           />
-          <div className="chat-shell-continue">
+          <div className="flex justify-end">
             <button
               type="button"
-              className="btn-primary w-full sm:w-auto"
+              className="btn-primary"
               disabled={!canContinueToSurvey || isLoading}
               onClick={onContinue}
             >

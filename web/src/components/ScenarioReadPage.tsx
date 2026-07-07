@@ -37,19 +37,17 @@ export function ScenarioReadPage({
         </p>
       </div>
 
-      <div className="scenario-read-actions">
-        <div className="flex w-full flex-col gap-4 sm:w-auto">
-          <FormErrorAlert message={error} />
-          <button
-            type="button"
-            className="btn-primary inline-flex items-center gap-2"
-            disabled={loading}
-            onClick={onContinue}
-          >
-            {SCENARIO_READ_CONTINUE_LABEL}
-            <ArrowRight size={18} strokeWidth={2} aria-hidden />
-          </button>
-        </div>
+      <div className="continue-actions continue-actions--spaced">
+        <FormErrorAlert message={error} />
+        <button
+          type="button"
+          className="btn-primary inline-flex items-center gap-2"
+          disabled={loading}
+          onClick={onContinue}
+        >
+          {SCENARIO_READ_CONTINUE_LABEL}
+          <ArrowRight size={18} strokeWidth={2} aria-hidden />
+        </button>
       </div>
     </section>
   );

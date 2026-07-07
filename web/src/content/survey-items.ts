@@ -170,7 +170,7 @@ export const POST_SURVEY = {
   behavioral_choice: {
     title: "Behavioral choice",
     prompt:
-      "If you were in this situation, which one of the following would you be most likely to do next? (Select one.)",
+      "If you were in this situation, which two of the following would you be most likely to do next? Please rank your top two choices, with 1 being most likely and 2 being second most likely.",
     options: [
       {
         key: "follow_resource",
