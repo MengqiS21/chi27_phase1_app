@@ -13,9 +13,7 @@ export function canContinueToSurvey(chatStartedAtMs: number | null): boolean {
   return chatElapsedMs(chatStartedAtMs) >= CHAT_MIN_DURATION_MS;
 }
 
-export function shouldForceContinueToSurvey(
-  chatStartedAtMs: number | null
-): boolean {
+export function hasReachedMaxDuration(chatStartedAtMs: number | null): boolean {
   if (chatStartedAtMs == null) return false;
   return chatElapsedMs(chatStartedAtMs) >= CHAT_MAX_DURATION_MS;
 }

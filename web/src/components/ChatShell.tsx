@@ -5,7 +5,10 @@ import { Bot, ChevronDown } from "lucide-react";
 import { ChatComposer } from "@/components/ChatComposer";
 import { ChatPanel } from "@/components/ChatPanel";
 import { FormErrorAlert } from "@/components/FormErrorAlert";
-import { CHAT_SITUATION_TOGGLE_LABEL } from "@/content/scenarios";
+import {
+  CHAT_CONVERSATION_ENDED_MESSAGE,
+  CHAT_SITUATION_TOGGLE_LABEL,
+} from "@/content/scenarios";
 import type { ChatMessage } from "@/lib/types";
 
 type Props = {
@@ -17,6 +20,7 @@ type Props = {
   onInputChange: (value: string) => void;
   onSend: () => void;
   isLoading: boolean;
+  conversationEnded: boolean;
   canContinueToSurvey: boolean;
   error?: string | null;
   onContinue: () => void;
@@ -32,6 +36,7 @@ export function ChatShell({
   onInputChange,
   onSend,
   isLoading,
+  conversationEnded,
   canContinueToSurvey,
   error = null,
   onContinue,
@@ -79,25 +84,44 @@ export function ChatShell({
       </div>
 
       <footer className="chat-shell-footer">
-        <div className="space-y-3">
-          <FormErrorAlert message={error} />
-          <ChatComposer
-            value={input}
-            onChange={onInputChange}
-            onSubmit={onSend}
-            loading={isLoading}
-          />
-          <div className="flex justify-end">
-            <button
-              type="button"
-              className="btn-primary"
-              disabled={!canContinueToSurvey || isLoading}
-              onClick={onContinue}
-            >
-              {continueLabel}
-            </button>
+        {conversationEnded ? (
+          <div className="space-y-4">
+            <p className="chat-shell-continue-text">
+              {CHAT_CONVERSATION_ENDED_MESSAGE}
+            </p>
+            <div className="continue-actions">
+              <FormErrorAlert message={error} />
+              <button
+                type="button"
+                className="btn-primary"
+                disabled={!canContinueToSurvey || isLoading}
+                onClick={onContinue}
+              >
+                {continueLabel}
+              </button>
+            </div>
           </div>
-        </div>
+        ) : (
+          <div className="space-y-3">
+            <FormErrorAlert message={error} />
+            <ChatComposer
+              value={input}
+              onChange={onInputChange}
+              onSubmit={onSend}
+              loading={isLoading}
+            />
+            <div className="continue-actions">
+              <button
+                type="button"
+                className="btn-primary"
+                disabled={!canContinueToSurvey || isLoading}
+                onClick={onContinue}
+              >
+                {continueLabel}
+              </button>
+            </div>
+          </div>
+        )}
       </footer>
     </div>
   );

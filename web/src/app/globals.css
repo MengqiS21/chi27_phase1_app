@@ -517,6 +517,10 @@
     @apply border-t border-border bg-surface px-3 py-3 sm:px-4;
   }
 
+  .chat-shell-continue-text {
+    @apply text-[0.9375rem] leading-relaxed text-muted;
+  }
+
   .chat-composer {
     @apply w-full;
   }

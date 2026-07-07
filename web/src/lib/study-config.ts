@@ -12,11 +12,14 @@ export const TRANSITION_TRIGGER_T = Number(
 
 export const PRE_TRANSITION_USER_TURNS = Math.max(0, TRANSITION_TRIGGER_T - 1);
 
-/** Minimum chat duration before "Continue to survey" is enabled. */
-export const CHAT_MIN_DURATION_MS = 12 * 60 * 1000;
+export const CHAT_MIN_DURATION_MINUTES = 10;
+export const CHAT_MAX_DURATION_MINUTES = 20;
 
-/** Maximum chat duration — auto-advance to post-survey. */
-export const CHAT_MAX_DURATION_MS = 25 * 60 * 1000;
+/** Minimum chat duration before "Continue to survey" is enabled. */
+export const CHAT_MIN_DURATION_MS = CHAT_MIN_DURATION_MINUTES * 60 * 1000;
+
+/** Maximum chat duration — conversation input closes; participant continues when ready. */
+export const CHAT_MAX_DURATION_MS = CHAT_MAX_DURATION_MINUTES * 60 * 1000;
 
 /**
  * Single scenario for all Phase 1 participants — switch here only after pilot.

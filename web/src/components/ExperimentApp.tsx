@@ -62,7 +62,7 @@ import {
 } from "@/lib/experiment-helpers";
 import {
   canContinueToSurvey as canContinueToSurveyByTime,
-  shouldForceContinueToSurvey,
+  hasReachedMaxDuration,
 } from "@/lib/chat-timing";
 import { STUDY } from "@/lib/study-config";
 import {
@@ -139,7 +139,8 @@ export function ExperimentApp() {
   const [chatInput, setChatInput] = useState("");
   const [chatStartedAtMs, setChatStartedAtMs] = useState<number | null>(null);
   const [canContinueToSurvey, setCanContinueToSurvey] = useState(false);
-  const forceContinueTriggeredRef = useRef(false);
+  const [conversationEnded, setConversationEnded] = useState(false);
+  const closeConversationAfterResponseRef = useRef(false);
   const { visible: stageVisible, run: withStageFade } = useFadeTransition();
 
   const applySessionRestore = useCallback((session: SessionRestorePayload) => {
@@ -163,6 +164,7 @@ export function ExperimentApp() {
     }));
     setChatStartedAtMs(session.chatStartedAtMs);
     setCanContinueToSurvey(canContinueToSurveyByTime(session.chatStartedAtMs));
+    setConversationEnded(hasReachedMaxDuration(session.chatStartedAtMs));
   }, []);
 
   useEffect(() => {
@@ -408,6 +410,8 @@ export function ExperimentApp() {
         await patchStage("scenario_chat", 0);
         setChatStartedAtMs(null);
         setCanContinueToSurvey(false);
+        setConversationEnded(false);
+        closeConversationAfterResponseRef.current = false;
         setState((s) => ({ ...s, stage: "scenario_chat" }));
       });
     } catch (e) {
@@ -419,7 +423,7 @@ export function ExperimentApp() {
 
   const handleSendMessage = async () => {
     const text = chatInput.trim();
-    if (!text || loading) return;
+    if (!text || loading || conversationEnded) return;
 
     setError(null);
     const priorMessages = state.messages;
@@ -463,6 +467,15 @@ export function ExperimentApp() {
         ],
         turnCount: nextTurn,
       }));
+
+      const elapsedStartedAt = startedAtMs ?? chatStartedAtMs;
+      if (
+        closeConversationAfterResponseRef.current ||
+        hasReachedMaxDuration(elapsedStartedAt)
+      ) {
+        setConversationEnded(true);
+        closeConversationAfterResponseRef.current = false;
+      }
     } catch (e) {
       setState((s) => ({ ...s, messages: priorMessages }));
       setChatInput(text);
@@ -472,30 +485,24 @@ export function ExperimentApp() {
     }
   };
 
-  const handleContinueToPostSurvey = useCallback(
-    async (options?: { forced?: boolean }) => {
-      if (
-        !options?.forced &&
-        !canContinueToSurveyByTime(chatStartedAtMs)
-      ) {
-        return;
-      }
+  const handleContinueToPostSurvey = useCallback(async () => {
+    if (!canContinueToSurveyByTime(chatStartedAtMs)) {
+      return;
+    }
 
-      setError(null);
-      setLoading(true);
-      try {
-        await withStageFade(async () => {
-          await patchStage("post_survey", 0);
-          setState((s) => ({ ...s, stage: "post_survey" }));
-        });
-      } catch (e) {
-        setError(e instanceof Error ? e.message : "Error");
-      } finally {
-        setLoading(false);
-      }
-    },
-    [chatStartedAtMs, patchStage, withStageFade]
-  );
+    setError(null);
+    setLoading(true);
+    try {
+      await withStageFade(async () => {
+        await patchStage("post_survey", 0);
+        setState((s) => ({ ...s, stage: "post_survey" }));
+      });
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Error");
+    } finally {
+      setLoading(false);
+    }
+  }, [chatStartedAtMs, patchStage, withStageFade]);
 
   useEffect(() => {
     if (state.stage !== "scenario_chat") {
@@ -503,26 +510,33 @@ export function ExperimentApp() {
     }
 
     const tick = () => {
-      const eligible = canContinueToSurveyByTime(chatStartedAtMs);
-      setCanContinueToSurvey(eligible);
+      setCanContinueToSurvey(canContinueToSurveyByTime(chatStartedAtMs));
 
-      if (
-        shouldForceContinueToSurvey(chatStartedAtMs) &&
-        !forceContinueTriggeredRef.current
-      ) {
-        forceContinueTriggeredRef.current = true;
-        void handleContinueToPostSurvey({ forced: true });
+      if (!hasReachedMaxDuration(chatStartedAtMs) || conversationEnded) {
+        return;
       }
+
+      if (loading) {
+        closeConversationAfterResponseRef.current = true;
+        return;
+      }
+
+      setConversationEnded(true);
     };
 
     tick();
     const intervalId = window.setInterval(tick, 1000);
     return () => window.clearInterval(intervalId);
-  }, [state.stage, chatStartedAtMs, handleContinueToPostSurvey]);
+  }, [
+    state.stage,
+    chatStartedAtMs,
+    conversationEnded,
+    loading,
+  ]);
 
   useEffect(() => {
     if (state.stage !== "scenario_chat") {
-      forceContinueTriggeredRef.current = false;
+      closeConversationAfterResponseRef.current = false;
     }
   }, [state.stage]);
 
@@ -866,6 +880,7 @@ export function ExperimentApp() {
             onInputChange={setChatInput}
             onSend={() => void handleSendMessage()}
             isLoading={loading}
+            conversationEnded={conversationEnded}
             canContinueToSurvey={canContinueToSurvey}
             error={error}
             onContinue={() => void handleContinueToPostSurvey()}
