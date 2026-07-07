@@ -7,6 +7,7 @@ export type Stage =
   | "scenario_view"
   | "scenario_chat"
   | "post_survey"
+  | "open_questions"
   | "demographics"
   | "debrief";
 

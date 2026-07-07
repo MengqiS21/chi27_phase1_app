@@ -88,7 +88,7 @@ CREATE INDEX IF NOT EXISTS conversations_participant_id_idx
 --
 -- Common section values:
 --   screening, consent, section_a, section_b, section_c, demographics
---   pre_moderators, post_survey (phase1)
+--   pre_moderators, post_survey, open_questions (phase1)
 --   assignment_meta — frozen assignment snapshot at randomization, e.g.
 --     { transition_trigger_t, scenario, condition_label, allocation_slot_index,
 --       pilot_group? }

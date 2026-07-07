@@ -33,6 +33,7 @@ function isStage(value: string): value is Stage {
     "scenario_view",
     "scenario_chat",
     "post_survey",
+    "open_questions",
     "demographics",
     "debrief",
   ].includes(value);

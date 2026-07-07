@@ -254,6 +254,33 @@ export const POST_SURVEY = {
   },
 } as const;
 
+export const OPEN_QUESTIONS = {
+  title: "Your reflections",
+  lead: "Please answer each question in your own words.",
+  items: [
+    {
+      key: "oq1",
+      text: "Q1. At some point in the conversation you just experienced, the AI may have suggested seeking support from other sources. If you noticed this, how did it feel? What about the way it responded shaped that feeling?",
+    },
+    {
+      key: "oq2",
+      text: "Q2. After this conversation, what is the main reason you would or would not seek support from another source?",
+    },
+    {
+      key: "oq3",
+      text: "Q3. Is there anything that would make it easier for you to actually follow through on getting support after a conversation like this?",
+    },
+    {
+      key: "oq4",
+      text: "Q4. Was there anything specific the AI said or did that stood out to you? How did it affect how you thought about getting support?",
+    },
+    {
+      key: "oq5",
+      text: "Q5. After talking to the AI about this, how do you feel about the idea of talking to a person, whether a friend, family member, or professional, about the same thing?",
+    },
+  ],
+} as const;
+
 export const DEMOGRAPHICS = {
   title: "About you",
   lead: "Almost done.",
@@ -350,3 +377,5 @@ export const POST_SURVEY_LIKERT_KEYS = allLikertKeys([
   POST_SURVEY.manipulation_norms,
   POST_SURVEY.manipulation_pbc,
 ]);
+
+export const OPEN_QUESTION_KEYS = OPEN_QUESTIONS.items.map((item) => item.key);

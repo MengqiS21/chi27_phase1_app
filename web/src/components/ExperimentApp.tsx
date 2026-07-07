@@ -25,6 +25,11 @@ import { PageHeader } from "@/components/PageHeader";
 import { SurveyGroupHeading } from "@/components/SurveyGroupHeading";
 import { ConsentFormContent } from "@/components/ConsentFormContent";
 import { FormErrorAlert } from "@/components/FormErrorAlert";
+import {
+  emptyOpenResponses,
+  OpenTextBlock,
+  validateOpenResponses,
+} from "@/components/OpenTextBlock";
 import { DebriefFinish } from "@/components/DebriefFinish";
 import { ScreenedOutFinish } from "@/components/ScreenedOutFinish";
 import {
@@ -37,6 +42,8 @@ import {
 } from "@/content/scenarios";
 import {
   DEMOGRAPHICS,
+  OPEN_QUESTION_KEYS,
+  OPEN_QUESTIONS,
   POST_SURVEY,
   POST_SURVEY_LIKERT_KEYS,
   PRE_MODERATORS,
@@ -115,6 +122,10 @@ export function ExperimentApp() {
     emptyLikert(POST_SURVEY_LIKERT_KEYS)
   );
   const [behavioralChoice, setBehavioralChoice] = useState("");
+
+  const [openResponses, setOpenResponses] = useState(() =>
+    emptyOpenResponses(OPEN_QUESTION_KEYS)
+  );
 
   const [demographics, setDemographics] = useState<DemographicsValues>(
     emptyDemographics
@@ -538,6 +549,34 @@ export function ExperimentApp() {
         },
         scenarioIndex: 0,
         scenarioType: currentScenarioType(state),
+        nextStage: "open_questions",
+      });
+      setState((s) => ({ ...s, stage: "open_questions" }));
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Error");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleOpenQuestionsSubmit = async () => {
+    setError(null);
+    const validationError = validateOpenResponses(
+      openResponses,
+      OPEN_QUESTION_KEYS
+    );
+    if (validationError) {
+      setError(validationError);
+      return;
+    }
+
+    setLoading(true);
+    try {
+      await saveSurvey({
+        section: "open_questions",
+        responses: openResponses,
+        scenarioIndex: 0,
+        scenarioType: currentScenarioType(state),
         nextStage: "demographics",
       });
       setState((s) => ({ ...s, stage: "demographics" }));
@@ -953,6 +992,40 @@ export function ExperimentApp() {
                 className="btn-primary inline-flex items-center gap-2"
                 disabled={loading}
                 onClick={() => void handlePostSurveySubmit()}
+              >
+                Continue
+                <ArrowRight size={18} strokeWidth={2} aria-hidden />
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {state.stage === "open_questions" && (
+        <div
+          className={`stage-transition ${stageVisible ? "stage-transition-visible" : ""}`}
+        >
+          <PageHeader
+            title={OPEN_QUESTIONS.title}
+            lead={OPEN_QUESTIONS.lead}
+            icon={ClipboardPen}
+          />
+          <div className="card">
+            <OpenTextBlock
+              items={OPEN_QUESTIONS.items}
+              values={openResponses}
+              namePrefix="open"
+              onChange={(key, value) =>
+                setOpenResponses((prev) => ({ ...prev, [key]: value }))
+              }
+            />
+            <div className="mt-8 space-y-4">
+              <FormErrorAlert message={error} />
+              <button
+                type="button"
+                className="btn-primary inline-flex items-center gap-2"
+                disabled={loading}
+                onClick={() => void handleOpenQuestionsSubmit()}
               >
                 Continue
                 <ArrowRight size={18} strokeWidth={2} aria-hidden />
