@@ -96,12 +96,19 @@ export const POST_SURVEY = {
     instruction:
       "Please rate how much you agree with each statement (1 = Strongly disagree, 5 = Strongly agree).",
     items: [
-      { key: "und1", text: "I understood why the AI responded the way it did." },
+      {
+        key: "und1",
+        text: "I understood why the AI started suggesting other sources of support at that point in the conversation.",
+      },
       {
         key: "und2",
-        text: "The reason behind the AI's response was clear to me.",
+        text: "The AI's shift toward suggesting other support made sense given what I had shared.",
       },
-      { key: "und3", text: "It made sense to me that the AI responded this way." },
+      {
+        key: "und3",
+        text: "The AI's response came as a surprise to me.",
+        reverseScored: true,
+      },
     ],
   },
   agency: {
@@ -132,22 +139,24 @@ export const POST_SURVEY = {
     items: [
       {
         key: "con1",
-        text: "The AI's response felt connected to what I had shared in the conversation.",
+        text: "The AI's responses reflected what I had actually shared in the conversation.",
       },
       {
         key: "con2",
-        text: "Throughout the conversation, I felt the AI stayed connected to what I was sharing.",
+        text: "Even as the conversation shifted, the AI's tone felt consistent with how it had been responding before.",
       },
       {
         key: "con3",
-        text: "At times, the AI's responses felt abrupt or disconnected from what I had shared.",
+        text: "The point at which the AI suggested other support felt abrupt given what we had been discussing.",
         reverseScored: true,
       },
     ],
   },
   intention: {
     title: "Help-seeking intention",
-    participantHeading: "From here, looking forward",
+    participantHeading: "If you were in this situation, looking forward...",
+    participantSubheading:
+      "Based on the conversation you just had, please respond as if you were the person in the scenario.",
     participantIcon: "arrow-right" as SurveyGroupIconKey,
     scale: "intention7" as const,
     instruction:
@@ -204,15 +213,15 @@ export const POST_SURVEY = {
     items: [
       {
         key: "mca1",
-        text: "The AI's responses made seeking further support feel like a positive thing to do.",
+        text: "The AI specifically emphasized that seeking support would be beneficial for me personally.",
       },
       {
         key: "mca2",
-        text: "The AI encouraged me to see reaching out for help as worthwhile.",
+        text: "The AI framed getting help as something meaningful and worth doing, not just as a practical option.",
       },
       {
         key: "mca3",
-        text: "The AI suggested that getting support would be good for me.",
+        text: "The AI's responses changed how I feel about the value of seeking support.",
       },
     ],
   },
@@ -226,11 +235,11 @@ export const POST_SURVEY = {
       },
       {
         key: "mcn2",
-        text: "The AI made it seem like reaching out for help is a common and accepted thing to do.",
+        text: "The AI conveyed that seeking help is something others would understand and accept.",
       },
       {
         key: "mcn3",
-        text: "The AI conveyed that seeking support is a normal choice for someone in my situation.",
+        text: "The AI made me feel that reaching out would not seem unusual or excessive to people around me.",
       },
     ],
   },
@@ -244,11 +253,11 @@ export const POST_SURVEY = {
       },
       {
         key: "mcp2",
-        text: "The AI made getting further support feel manageable and achievable.",
+        text: "The AI gave me specific information that would make it easier to follow through.",
       },
       {
         key: "mcp3",
-        text: "The AI helped me feel that I could actually take the next step if I wanted to.",
+        text: "The AI helped me feel confident that getting support was something I could actually do.",
       },
     ],
   },
@@ -264,7 +273,7 @@ export const OPEN_QUESTIONS = {
     },
     {
       key: "oq2",
-      text: "Q2. After this conversation, what is the main reason you would or would not seek support from another source?",
+      text: "Q2. Thinking about the situation you just read and the conversation you had, what is the main reason you would or would not seek support from another source?",
     },
     {
       key: "oq3",
@@ -276,7 +285,7 @@ export const OPEN_QUESTIONS = {
     },
     {
       key: "oq5",
-      text: "Q5. After talking to the AI about this, how do you feel about the idea of talking to a person, whether a friend, family member, or professional, about the same thing?",
+      text: "Q5. After talking to the AI about this, how do you feel about the idea of talking to a person, whether a friend, family member, or professional, about the same thing? Why?",
     },
   ],
 } as const;

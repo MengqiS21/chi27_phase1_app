@@ -59,8 +59,8 @@ export function BehavioralRankChoice({ options, values, onChange }: Props) {
     <div className="behavioral-rank-list" role="group" aria-label="Rank your top two choices">
       <div className="behavioral-rank-header" aria-hidden>
         <span className="behavioral-rank-header-spacer" />
-        <span className="behavioral-rank-header-label">1</span>
-        <span className="behavioral-rank-header-label">2</span>
+        <span className="behavioral-rank-header-label">Most likely</span>
+        <span className="behavioral-rank-header-label">Second likely</span>
       </div>
       {options.map((option) => {
         const rank1Selected = values.rank1 === option.key;

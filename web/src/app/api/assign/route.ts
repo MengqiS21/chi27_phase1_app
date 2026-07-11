@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { PRODUCTION_ACCESS_CODE } from "@/content/access-codes";
 import { assignPhase1 } from "@/lib/assignment";
 import { getPhase1AllocationSlot } from "@/lib/phase1-allocation";
 import {
@@ -11,6 +12,7 @@ import type { Condition, ScenarioType } from "@/lib/types";
 type ParticipantRow = {
   id: string;
   study: string;
+  access_code: string | null;
   assigned_condition: Condition | null;
   condition_label: string | null;
   scenario_order: ScenarioType[] | null;
@@ -18,6 +20,14 @@ type ParticipantRow = {
   interaction_scenario: ScenarioType | null;
   latin_square_row: number | null;
 };
+
+function devOnlySlotIndex(participantId: string): number {
+  let hash = 0;
+  for (let i = 0; i < participantId.length; i++) {
+    hash = (hash * 31 + participantId.charCodeAt(i)) >>> 0;
+  }
+  return hash % PHASE1_ALLOCATION_SIZE;
+}
 
 function assignmentResponse(row: ParticipantRow) {
   return {
@@ -38,6 +48,7 @@ async function findFirstOpenPhase1Slot(
     .from("participants")
     .select("latin_square_row")
     .eq("study", "phase1")
+    .eq("access_code", PRODUCTION_ACCESS_CODE)
     .not("assigned_condition", "is", null)
     .not("latin_square_row", "is", null);
 
@@ -72,7 +83,7 @@ export async function POST(request: Request) {
     const { data: existing, error: fetchError } = await supabase
       .from("participants")
       .select(
-        "id, study, assigned_condition, condition_label, scenario_order, experienced_scenario_index, interaction_scenario, latin_square_row"
+        "id, study, access_code, assigned_condition, condition_label, scenario_order, experienced_scenario_index, interaction_scenario, latin_square_row"
       )
       .eq("id", participantId)
       .single();
@@ -97,15 +108,19 @@ export async function POST(request: Request) {
       try {
         const openSlot = await findFirstOpenPhase1Slot(supabase);
         if (openSlot === null) {
-          return NextResponse.json(
-            {
-              error:
-                "This study has reached its participant capacity. Thank you for your interest.",
-            },
-            { status: 403 }
-          );
+          if (existing.access_code === PRODUCTION_ACCESS_CODE) {
+            return NextResponse.json(
+              {
+                error:
+                  "This study has reached its participant capacity. Thank you for your interest.",
+              },
+              { status: 403 }
+            );
+          }
+          slotIndex = devOnlySlotIndex(existing.id);
+        } else {
+          slotIndex = openSlot;
         }
-        slotIndex = openSlot;
       } catch (slotLookupError) {
         const message =
           slotLookupError instanceof Error

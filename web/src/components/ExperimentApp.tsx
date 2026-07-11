@@ -944,6 +944,9 @@ export function ExperimentApp() {
             <SurveyGroupHeading icon={POST_SURVEY.intention.participantIcon}>
               {POST_SURVEY.intention.participantHeading}
             </SurveyGroupHeading>
+            <p className="-mt-2 mb-4 text-sm italic leading-relaxed text-muted">
+              {POST_SURVEY.intention.participantSubheading}
+            </p>
             <LikertBlock
               items={POST_SURVEY.intention.items.map((i) => i.text)}
               keys={POST_SURVEY.intention.items.map((i) => i.key)}
