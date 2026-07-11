@@ -53,15 +53,23 @@ export const PRE_MODERATORS = {
       },
       {
         key: "soc2",
-        text: "My family really tries to help me.",
+        text: "There is a special person with whom I can share my joys and sorrows.",
       },
       {
         key: "soc3",
-        text: "I can count on my friends when things go wrong.",
+        text: "My family really tries to help me.",
       },
       {
         key: "soc4",
-        text: "I have people in my life with whom I can share my joys and sorrows.",
+        text: "My family is willing to help me make decisions.",
+      },
+      {
+        key: "soc5",
+        text: "I can count on my friends when things go wrong.",
+      },
+      {
+        key: "soc6",
+        text: "I can talk about my problems with my friends.",
       },
     ],
   },
