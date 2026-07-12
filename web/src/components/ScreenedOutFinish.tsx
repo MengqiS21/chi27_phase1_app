@@ -2,7 +2,13 @@ import { HeartHandshake } from "lucide-react";
 import { SCREENED_OUT } from "@/content/screened-out";
 import { PageHeader } from "@/components/PageHeader";
 
-export function ScreenedOutFinish() {
+type ScreenedOutFinishProps = {
+  completionCode?: string;
+};
+
+export function ScreenedOutFinish({
+  completionCode = SCREENED_OUT.completionCode,
+}: ScreenedOutFinishProps) {
   return (
     <>
       <PageHeader
@@ -25,9 +31,9 @@ export function ScreenedOutFinish() {
           </p>
           <p
             className="font-mono text-2xl font-bold tracking-wide text-accent"
-            aria-label={`Completion code: ${SCREENED_OUT.completionCode}`}
+            aria-label={`Completion code: ${completionCode}`}
           >
-            {SCREENED_OUT.completionCode}
+            {completionCode}
           </p>
         </div>
       </div>

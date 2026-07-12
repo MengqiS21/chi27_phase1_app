@@ -14,3 +14,9 @@ export const SCREENED_OUT = {
     "To confirm your participation on CloudResearch, please return there and enter the completion code below manually. Do not rely on your browser's back button or an automatic redirect link—type the code on CloudResearch's completion page:",
   completionCode: "STUDY-PARTIAL",
 } as const;
+
+/** CloudResearch completion codes when screened out due to attention checks. */
+export const ATTENTION_CHECK_COMPLETION_CODES = {
+  pre: "E7A321F852",
+  post: "E73E878D29",
+} as const;

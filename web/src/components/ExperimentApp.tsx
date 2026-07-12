@@ -39,6 +39,10 @@ import {
 import { DebriefFinish } from "@/components/DebriefFinish";
 import { ScreenedOutFinish } from "@/components/ScreenedOutFinish";
 import {
+  ATTENTION_CHECK_COMPLETION_CODES,
+  SCREENED_OUT,
+} from "@/content/screened-out";
+import {
   CONSENT_FORM,
 } from "@/content/consent";
 import {
@@ -47,7 +51,9 @@ import {
   USER_TASK_CHAT_INSTRUCTIONS,
 } from "@/content/scenarios";
 import {
+  ATTENTION_CHECKS,
   DEMOGRAPHICS,
+  isAttentionCheckCorrect,
   OPEN_QUESTION_KEYS,
   OPEN_QUESTIONS,
   POST_SURVEY,
@@ -140,6 +146,9 @@ export function ExperimentApp() {
   const [chatStartedAtMs, setChatStartedAtMs] = useState<number | null>(null);
   const [canContinueToSurvey, setCanContinueToSurvey] = useState(false);
   const [conversationEnded, setConversationEnded] = useState(false);
+  const [screenedOutCompletionCode, setScreenedOutCompletionCode] = useState<string>(
+    SCREENED_OUT.completionCode
+  );
   const closeConversationAfterResponseRef = useRef(false);
   const { visible: stageVisible, run: withStageFade } = useFadeTransition();
 
@@ -327,6 +336,9 @@ export function ExperimentApp() {
         responses: screening,
         nextStage: screenedOut ? "screened_out" : "consent",
       });
+      if (screenedOut) {
+        setScreenedOutCompletionCode(SCREENED_OUT.completionCode);
+      }
       setState((s) => ({
         ...s,
         stage: screenedOut ? "screened_out" : "consent",
@@ -384,8 +396,27 @@ export function ExperimentApp() {
       return;
     }
 
+    const attentionFailed = !isAttentionCheckCorrect(
+      preModerators,
+      ATTENTION_CHECKS.pre
+    );
+
     setLoading(true);
     try {
+      if (attentionFailed) {
+        await saveSurvey({
+          section: "pre_moderators",
+          responses: {
+            ...preModerators,
+            attention_check_failed: ATTENTION_CHECKS.pre.key,
+          },
+          nextStage: "screened_out",
+        });
+        setScreenedOutCompletionCode(ATTENTION_CHECK_COMPLETION_CODES.pre);
+        setState((s) => ({ ...s, stage: "screened_out" }));
+        return;
+      }
+
       await withStageFade(async () => {
         await saveSurvey({
           section: "pre_moderators",
@@ -546,13 +577,38 @@ export function ExperimentApp() {
       setError("Please answer all items before continuing.");
       return;
     }
-    const behavioralValidationError = validateBehavioralRanks(behavioralRanks);
-    if (behavioralValidationError) {
-      setError(behavioralValidationError);
-      return;
+
+    const attentionFailed = !isAttentionCheckCorrect(
+      postLikert,
+      ATTENTION_CHECKS.post
+    );
+
+    if (!attentionFailed) {
+      const behavioralValidationError = validateBehavioralRanks(behavioralRanks);
+      if (behavioralValidationError) {
+        setError(behavioralValidationError);
+        return;
+      }
     }
+
     setLoading(true);
     try {
+      if (attentionFailed) {
+        await saveSurvey({
+          section: "post_survey",
+          responses: {
+            ...postLikert,
+            attention_check_failed: ATTENTION_CHECKS.post.key,
+          },
+          scenarioIndex: 0,
+          scenarioType: currentScenarioType(state),
+          nextStage: "screened_out",
+        });
+        setScreenedOutCompletionCode(ATTENTION_CHECK_COMPLETION_CODES.post);
+        setState((s) => ({ ...s, stage: "screened_out" }));
+        return;
+      }
+
       const options = POST_SURVEY.behavioral_choice.options;
       await saveSurvey({
         section: "post_survey",
@@ -748,7 +804,9 @@ export function ExperimentApp() {
         </>
       )}
 
-      {state.stage === "screened_out" && <ScreenedOutFinish />}
+      {state.stage === "screened_out" && (
+        <ScreenedOutFinish completionCode={screenedOutCompletionCode} />
+      )}
 
       {state.stage === "consent" && (
         <>
@@ -833,6 +891,17 @@ export function ExperimentApp() {
               values={preModerators}
               namePrefix="pre"
               scale={PRE_MODERATORS.disclosure.scale}
+              onChange={(key, value) =>
+                setPreModerators((prev) => ({ ...prev, [key]: value }))
+              }
+            />
+            <hr className="survey-group-divider" />
+            <LikertBlock
+              items={[ATTENTION_CHECKS.pre.text]}
+              keys={[ATTENTION_CHECKS.pre.key]}
+              values={preModerators}
+              namePrefix="pre"
+              scale={ATTENTION_CHECKS.pre.scale}
               onChange={(key, value) =>
                 setPreModerators((prev) => ({ ...prev, [key]: value }))
               }
@@ -998,6 +1067,17 @@ export function ExperimentApp() {
               values={postLikert}
               namePrefix="post"
               scale={POST_SURVEY.manipulation_pbc.scale}
+              onChange={(key, value) =>
+                setPostLikert((prev) => ({ ...prev, [key]: value }))
+              }
+            />
+            <hr className="survey-group-divider" />
+            <LikertBlock
+              items={[ATTENTION_CHECKS.post.text]}
+              keys={[ATTENTION_CHECKS.post.key]}
+              values={postLikert}
+              namePrefix="post"
+              scale={ATTENTION_CHECKS.post.scale}
               onChange={(key, value) =>
                 setPostLikert((prev) => ({ ...prev, [key]: value }))
               }

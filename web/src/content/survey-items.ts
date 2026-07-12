@@ -90,6 +90,29 @@ export const PRE_MODERATORS = {
   },
 } as const;
 
+/** Embedded attention checks (agree5). Wrong answer → screened_out / STUDY-PARTIAL. */
+export const ATTENTION_CHECKS = {
+  pre: {
+    key: "att_pre",
+    text: "To show you are paying attention, please select 'Strongly agree' for this item.",
+    scale: "agree5" as const,
+    correctValue: 5,
+  },
+  post: {
+    key: "att_post",
+    text: "To show you are paying attention, please select 'Disagree' for this item.",
+    scale: "agree5" as const,
+    correctValue: 2,
+  },
+} as const;
+
+export function isAttentionCheckCorrect(
+  responses: Record<string, number | null>,
+  check: (typeof ATTENTION_CHECKS)[keyof typeof ATTENTION_CHECKS]
+): boolean {
+  return responses[check.key] === check.correctValue;
+}
+
 export const POST_SURVEY = {
   title: "After the conversation",
   lead: "The following statements refer to the conversation you just had.",
@@ -379,20 +402,26 @@ export function allLikertKeys(
   return sections.flatMap((s) => s.items.map((i) => i.key));
 }
 
-export const PRE_MODERATOR_KEYS = allLikertKeys([
-  PRE_MODERATORS.ai_reliance,
-  PRE_MODERATORS.social_support,
-  PRE_MODERATORS.disclosure,
-]);
+export const PRE_MODERATOR_KEYS = [
+  ...allLikertKeys([
+    PRE_MODERATORS.ai_reliance,
+    PRE_MODERATORS.social_support,
+    PRE_MODERATORS.disclosure,
+  ]),
+  ATTENTION_CHECKS.pre.key,
+];
 
-export const POST_SURVEY_LIKERT_KEYS = allLikertKeys([
-  POST_SURVEY.understanding,
-  POST_SURVEY.agency,
-  POST_SURVEY.continuity,
-  POST_SURVEY.intention,
-  POST_SURVEY.manipulation_attitude,
-  POST_SURVEY.manipulation_norms,
-  POST_SURVEY.manipulation_pbc,
-]);
+export const POST_SURVEY_LIKERT_KEYS = [
+  ...allLikertKeys([
+    POST_SURVEY.understanding,
+    POST_SURVEY.agency,
+    POST_SURVEY.continuity,
+    POST_SURVEY.intention,
+    POST_SURVEY.manipulation_attitude,
+    POST_SURVEY.manipulation_norms,
+    POST_SURVEY.manipulation_pbc,
+  ]),
+  ATTENTION_CHECKS.post.key,
+];
 
 export const OPEN_QUESTION_KEYS = OPEN_QUESTIONS.items.map((item) => item.key);
