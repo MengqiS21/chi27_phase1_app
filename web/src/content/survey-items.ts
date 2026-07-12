@@ -329,7 +329,7 @@ export const OPEN_QUESTIONS = {
     },
     {
       key: "oq4",
-      text: "Q4. Was there anything specific the AI said or did that stood out to you? How did it affect how you thought about getting support?",
+      text: "Q4. Think about a specific moment or response from the AI that stood out to you, either something that made you more or less open to getting support. What was it, and how did it shift how you thought about seeking help?",
     },
     {
       key: "oq5",
