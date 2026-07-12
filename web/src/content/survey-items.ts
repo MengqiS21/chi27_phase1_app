@@ -90,21 +90,38 @@ export const PRE_MODERATORS = {
   },
 } as const;
 
-/** Embedded attention checks (agree5). Wrong answer → screened_out / STUDY-PARTIAL. */
+/** Embedded attention checks (agree5). Wrong answer → screened_out. */
 export const ATTENTION_CHECKS = {
   pre: {
     key: "att_pre",
     text: "To show you are paying attention, please select 'Strongly agree' for this item.",
     scale: "agree5" as const,
     correctValue: 5,
+    /** Insert among ai_reliance items (same agree5 scale). */
+    insertAfterKey: "air2",
   },
   post: {
     key: "att_post",
     text: "To show you are paying attention, please select 'Disagree' for this item.",
     scale: "agree5" as const,
     correctValue: 2,
+    /** Insert among understanding items (same agree5 scale). */
+    insertAfterKey: "und2",
   },
 } as const;
+
+export function embedAttentionItem(
+  items: ReadonlyArray<{ key: string; text: string }>,
+  check: (typeof ATTENTION_CHECKS)[keyof typeof ATTENTION_CHECKS]
+): { items: string[]; keys: string[] } {
+  const texts = items.map((item) => item.text);
+  const keys = items.map((item) => item.key);
+  const anchor = keys.indexOf(check.insertAfterKey);
+  const insertAt = anchor === -1 ? keys.length : anchor + 1;
+  texts.splice(insertAt, 0, check.text);
+  keys.splice(insertAt, 0, check.key);
+  return { items: texts, keys };
+}
 
 export function isAttentionCheckCorrect(
   responses: Record<string, number | null>,

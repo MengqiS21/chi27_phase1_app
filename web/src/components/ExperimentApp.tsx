@@ -53,6 +53,7 @@ import {
 import {
   ATTENTION_CHECKS,
   DEMOGRAPHICS,
+  embedAttentionItem,
   isAttentionCheckCorrect,
   OPEN_QUESTION_KEYS,
   OPEN_QUESTIONS,
@@ -858,8 +859,10 @@ export function ExperimentApp() {
               {PRE_MODERATORS.ai_reliance.participantHeading}
             </SurveyGroupHeading>
             <LikertBlock
-              items={PRE_MODERATORS.ai_reliance.items.map((i) => i.text)}
-              keys={PRE_MODERATORS.ai_reliance.items.map((i) => i.key)}
+              {...embedAttentionItem(
+                PRE_MODERATORS.ai_reliance.items,
+                ATTENTION_CHECKS.pre
+              )}
               values={preModerators}
               namePrefix="pre"
               scale={PRE_MODERATORS.ai_reliance.scale}
@@ -891,17 +894,6 @@ export function ExperimentApp() {
               values={preModerators}
               namePrefix="pre"
               scale={PRE_MODERATORS.disclosure.scale}
-              onChange={(key, value) =>
-                setPreModerators((prev) => ({ ...prev, [key]: value }))
-              }
-            />
-            <hr className="survey-group-divider" />
-            <LikertBlock
-              items={[ATTENTION_CHECKS.pre.text]}
-              keys={[ATTENTION_CHECKS.pre.key]}
-              values={preModerators}
-              namePrefix="pre"
-              scale={ATTENTION_CHECKS.pre.scale}
               onChange={(key, value) =>
                 setPreModerators((prev) => ({ ...prev, [key]: value }))
               }
@@ -972,8 +964,10 @@ export function ExperimentApp() {
               {POST_SURVEY.understanding.participantHeading}
             </SurveyGroupHeading>
             <LikertBlock
-              items={POST_SURVEY.understanding.items.map((i) => i.text)}
-              keys={POST_SURVEY.understanding.items.map((i) => i.key)}
+              {...embedAttentionItem(
+                POST_SURVEY.understanding.items,
+                ATTENTION_CHECKS.post
+              )}
               values={postLikert}
               namePrefix="post"
               scale={POST_SURVEY.understanding.scale}
@@ -1067,17 +1061,6 @@ export function ExperimentApp() {
               values={postLikert}
               namePrefix="post"
               scale={POST_SURVEY.manipulation_pbc.scale}
-              onChange={(key, value) =>
-                setPostLikert((prev) => ({ ...prev, [key]: value }))
-              }
-            />
-            <hr className="survey-group-divider" />
-            <LikertBlock
-              items={[ATTENTION_CHECKS.post.text]}
-              keys={[ATTENTION_CHECKS.post.key]}
-              values={postLikert}
-              namePrefix="post"
-              scale={ATTENTION_CHECKS.post.scale}
               onChange={(key, value) =>
                 setPostLikert((prev) => ({ ...prev, [key]: value }))
               }
