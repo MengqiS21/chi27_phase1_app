@@ -150,6 +150,9 @@ export function ExperimentApp() {
   const [screenedOutCompletionCode, setScreenedOutCompletionCode] = useState<string>(
     SCREENED_OUT.completionCode
   );
+  const [screenedOutVariant, setScreenedOutVariant] = useState<
+    "screening" | "attention"
+  >("screening");
   const closeConversationAfterResponseRef = useRef(false);
   const { visible: stageVisible, run: withStageFade } = useFadeTransition();
 
@@ -339,6 +342,7 @@ export function ExperimentApp() {
       });
       if (screenedOut) {
         setScreenedOutCompletionCode(SCREENED_OUT.completionCode);
+        setScreenedOutVariant("screening");
       }
       setState((s) => ({
         ...s,
@@ -414,6 +418,7 @@ export function ExperimentApp() {
           nextStage: "screened_out",
         });
         setScreenedOutCompletionCode(ATTENTION_CHECK_COMPLETION_CODES.pre);
+        setScreenedOutVariant("attention");
         setState((s) => ({ ...s, stage: "screened_out" }));
         return;
       }
@@ -606,6 +611,7 @@ export function ExperimentApp() {
           nextStage: "screened_out",
         });
         setScreenedOutCompletionCode(ATTENTION_CHECK_COMPLETION_CODES.post);
+        setScreenedOutVariant("attention");
         setState((s) => ({ ...s, stage: "screened_out" }));
         return;
       }
@@ -806,7 +812,10 @@ export function ExperimentApp() {
       )}
 
       {state.stage === "screened_out" && (
-        <ScreenedOutFinish completionCode={screenedOutCompletionCode} />
+        <ScreenedOutFinish
+          completionCode={screenedOutCompletionCode}
+          variant={screenedOutVariant}
+        />
       )}
 
       {state.stage === "consent" && (

@@ -15,6 +15,19 @@ export const SCREENED_OUT = {
   completionCode: "STUDY-PARTIAL",
 } as const;
 
+/** Copy shown when a participant fails an embedded attention check. */
+export const ATTENTION_CHECK_SCREENED_OUT = {
+  pageTitle: "Thank You for Your Participation",
+  lead: "",
+  body: [
+    "Unfortunately, we were unable to include your responses in this study. Based on your answers, we are not able to confirm that the survey was completed with sufficient attention.",
+    "We appreciate your time and interest in this research.",
+  ],
+  contactInstruction:
+    "If you have any questions, please contact the study publisher through CloudResearch.",
+  completionInstruction: SCREENED_OUT.completionInstruction,
+} as const;
+
 /** CloudResearch completion codes when screened out due to attention checks. */
 export const ATTENTION_CHECK_COMPLETION_CODES = {
   pre: "E7A321F852",
