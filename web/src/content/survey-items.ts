@@ -269,7 +269,7 @@ export const POST_SURVEY = {
       },
       {
         key: "mca3",
-        text: "The AI's responses changed how I feel about the value of seeking support.",
+        text: "The AI's responses made me see seeking support as something that reflects self-awareness, not weakness.",
       },
     ],
   },
